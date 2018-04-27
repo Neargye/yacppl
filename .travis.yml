@@ -4,6 +4,12 @@ sudo: required
 
 language: cpp
 
+git:
+  depth: 1
+
+matrix:
+  fast_finish: true
+
 os:
   - linux
   - osx
@@ -22,6 +28,7 @@ script:
   - cd build
   - cmake .. -DCMAKE_BUILD_TYPE=$CONFIGURATION -DTARGET_CPU=$PLATFORM
   - cmake --build . --config $CONFIGURATION
+  - ctest -V --output-on-failure -С $CONFIGURATION
 
 notifications:
   email: false

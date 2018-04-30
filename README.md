@@ -28,6 +28,17 @@ std::ofstream file("test.txt");
 DEFER{ file.close(); }; // File close when the enclosing scope exits or an error is thrown.
 ```
 
+* [state_save](https://github.com/Neargye/state_save) - saves the original value of a variable, and restores on scope exit, undoing any change the object may have gone through.
+
+```cpp
+void Foo(A& a)
+  STATE_SAVER(a);
+  .... // alter state of a by calling non-const functions
+  ... // other code
+  // original state of a automatically restored on scope exit
+}
+```
+
 Сollection of useful С++11 macros:
 
 * [unused](include/unused.hpp) - Macros with varying number of arguments to avoid "unused variable" warnings.

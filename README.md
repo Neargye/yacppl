@@ -25,17 +25,17 @@ std::cout << NAMEOF(person.address.zip_code) << std::endl; // prints "zip_code"
 
 ```cpp
 std::ofstream file("test.txt");
-DEFER{ file.close(); }; // File close when the enclosing scope exits or an error is thrown.
+DEFER{ file.close(); }; // File closes when exit the enclosing scope or errors occure.
 ```
 
-* [state_save](https://github.com/Neargye/state_save) - saves the original value of a variable, and restores on scope exit, undoing any change the object may have gone through.
+* [state_save](https://github.com/Neargye/state_save) - Saves the origin variable value and restores on scope exit, undoes any changes that could occure to the object.
 
 ```cpp
 void Foo(A& a)
   STATE_SAVER(a);
-  .... // alter state of a by calling non-const functions
-  ... // other code
-  // original state of a automatically restored on scope exit
+  ... // Alter state from non-const functions.
+  ... // Other code.
+  // Original state automatically restored.
 }
 ```
 

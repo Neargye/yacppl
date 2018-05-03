@@ -138,7 +138,6 @@ script:
   - cd build
   - cmake .. -DCMAKE_BUILD_TYPE=${CONFIGURATION}
   - cmake --build . --config ${CONFIGURATION}
-  - ctest -V --output-on-failure -С ${CONFIGURATION}
 
 notifications:
   email: false

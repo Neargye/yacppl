@@ -29,6 +29,3 @@ before_build:
 
 build_script:
   - cmake --build . --config %CONFIGURATION%
-
-test_script:
-  - ctest -V --output-on-failure -C %CONFIGURATION%

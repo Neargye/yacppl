@@ -30,10 +30,15 @@
 
 namespace unused {
 
-template <typename... T>
-inline void Unused(T...) noexcept {}
+template <typename... Args>
+inline void Unused(Args...) noexcept {}
 
 } // namespace unused
 
+#if defined(_MSC_VER) && _MSC_VER < 1910
 // UNUSED macros with varying number of arguments to avoid "unused variable" warnings.
-#define UNUSED(...) ((void)(decltype(::unused::Unused(__VA_ARGS__))()))
+#  define UNUSED(...) ((void)(__VA_ARGS__))
+#else
+// UNUSED macros with varying number of arguments to avoid "unused variable" warnings.
+#  define UNUSED(...) ((void)(decltype(::unused::Unused(__VA_ARGS__))()))
+#endif

@@ -23,6 +23,10 @@
 
 #include <unused.hpp>
 
+void foo_unused(int i) {
+  UNUSED(i); // No warning: unused parameter 'i'.
+}
+
 int main() {
   int a = 0;
   float b = 0.0f;

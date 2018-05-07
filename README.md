@@ -24,7 +24,7 @@ std::cout << NAMEOF(person.address.zip_code) << std::endl; // prints "zip_code"
 * [scope_guard](https://github.com/Neargye/scope_guard) - Scope Guard & Defer C++.
 
 ```cpp
-std::ofstream file("test.txt");
+std::fstream file("test.txt");
 DEFER{ file.close(); }; // File closes when exit the enclosing scope or errors occure.
 ```
 

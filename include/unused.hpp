@@ -31,7 +31,7 @@
 namespace unused {
 
 template <typename... Args>
-inline void Unused(Args...) noexcept {}
+inline void Unused(const Args&...) noexcept {}
 
 } // namespace unused
 

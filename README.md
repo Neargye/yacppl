@@ -41,6 +41,8 @@ void Foo(A& a)
 
 Сollection of useful С++11 macros:
 
+* [cpp_attributes](include/cpp_attributes.hpp) - Cross-compiler C++ attributes.
+
 * [unused](include/unused.hpp) - Macros with varying number of arguments to avoid "unused variable" warnings.
 
 ```cpp

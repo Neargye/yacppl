@@ -22,11 +22,29 @@
 // SOFTWARE.
 
 #include <cpp_attributes.hpp>
+#include <exception>
 
-void foo(CPP_ATTRIBUTE_UNUSED int i) {} // No warning: unused parameter 'i'.
+CPP_ATTRIBUTE_MAYBE_UNUSED float foo1(CPP_ATTRIBUTE_MAYBE_UNUSED int i) {  // No warning: unused parameter 'i'.
+  return 42.0f;
+}
+
+CPP_ATTRIBUTE_NORETURN void foo2() { std::terminate(); }
+
+CPP_ATTRIBUTE_DEPRECATED void foo3() {}
+
+// TODO: CPP_ATTRIBUTE_DEPRECATED("deprecated") void foo4() {}
+
+CPP_ATTRIBUTE_NODISCARD int foo5() { return 42; }
 
 int main() {
-  CPP_ATTRIBUTE_UNUSED int a = 0; // No warning: unused variable 'a'.
+  CPP_ATTRIBUTE_MAYBE_UNUSED int a = foo5();  // No warning: unused variable 'a'.
+
+  switch (a) {
+    case 1:
+      CPP_ATTRIBUTE_FALLTHROUGH
+    default:
+      break;
+  }
 
   return 0;
 }

@@ -33,7 +33,7 @@
 // The behavior is undefined if the function with this attribute actually returns.
 #if !defined(CPP_ATTRIBUTE_NORETURN)
 #  if defined(_MSC_VER)
-#    if (_MSC_VER >= 1910 || (defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 190024210))
+#    if (_MSC_FULL_VER >= 190024210)
 #      define CPP_ATTRIBUTE_NORETURN [[noreturn]]
 #    else
 #      define CPP_ATTRIBUTE_NORETURN __declspec(noreturn)
@@ -70,7 +70,7 @@
 #    endif
 #  elif defined(__clang__)
 #    if ((__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 4)) && __cplusplus >= 201402L)
-#      define CPP_ATTRIBUTE_DEPRECATED [[deprecated(reason)]]
+#      define CPP_ATTRIBUTE_DEPRECATED [[deprecated]]
 #    else
 #      define CPP_ATTRIBUTE_DEPRECATED __attribute__((__deprecated__))
 #    endif
@@ -139,7 +139,7 @@
 #  endif
 #endif
 
-// CPP_ATTRIBUTE_UNUSED appears in the declaration of a class, a typedef­, a variable, a non­static data member, a function, an enumeration, or an enumerator.
+// CPP_ATTRIBUTE_MAYBE_UNUSED appears in the declaration of a class, a typedef­, a variable, a non­static data member, a function, an enumeration, or an enumerator.
 // If the compiler issues warnings on unused entities, that warning is suppressed for any entity declared maybe unused.
 #if !defined(CPP_ATTRIBUTE_MAYBE_UNUSED)
 #  if defined(_MSC_VER)

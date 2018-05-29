@@ -30,15 +30,22 @@
 
 namespace unused {
 
+#if ((defined(_MSC_VER) && _MSC_VER >= 1910) ||                                                                                   \
+     (defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 4)) && __cplusplus >= 201402L) || \
+     (defined(__GNUC__) && __GNUC__ >= 5))
+template <typename... Args>
+inline constexpr void Unused(const Args&...) noexcept {}
+#else
 template <typename... Args>
 inline void Unused(const Args&...) noexcept {}
+#endif
 
 } // namespace unused
 
-#if defined(_MSC_VER) && _MSC_VER < 1910
+#if defined(_MSC_VER)
 // UNUSED macros with varying number of arguments to avoid "unused variable" warnings.
-#  define UNUSED(...) ((void)(__VA_ARGS__))
+#  define UNUSED(...) ((void)(__VA_ARGS__));
 #else
 // UNUSED macros with varying number of arguments to avoid "unused variable" warnings.
-#  define UNUSED(...) ((void)(decltype(::unused::Unused(__VA_ARGS__))()))
+#  define UNUSED(...) (decltype(::unused::Unused(__VA_ARGS__))());
 #endif

@@ -28,139 +28,137 @@
 
 #pragma once
 
-// CPP_ATTRIBUTE_NORETURN indicates that a function does not return.
-// This attribute applies to function declarations only.
-// The behavior is undefined if the function with this attribute actually returns.
-#if !defined(CPP_ATTRIBUTE_NORETURN)
+// CPP_ATTR_NORETURN indicates that the function does not return.
+#if !defined(CPP_ATTR_NORETURN)
 #  if defined(_MSC_VER)
 #    if (_MSC_FULL_VER >= 190024210)
-#      define CPP_ATTRIBUTE_NORETURN [[noreturn]]
+#      define CPP_ATTR_NORETURN [[noreturn]]
 #    else
-#      define CPP_ATTRIBUTE_NORETURN __declspec(noreturn)
+#      define CPP_ATTR_NORETURN __declspec(noreturn)
 #    endif
 #  elif defined(__clang__)
 #    if ((__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 3)) && __cplusplus >= 201103L)
-#      define CPP_ATTRIBUTE_NORETURN [[noreturn]]
+#      define CPP_ATTR_NORETURN [[noreturn]]
 #    else
-#      define CPP_ATTRIBUTE_NORETURN __attribute__((__noreturn__))
+#      define CPP_ATTR_NORETURN __attribute__((__noreturn__))
 #    endif
 #  elif defined(__GNUC__)
 #    if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)) && __cplusplus >= 201103L)
-#      define CPP_ATTRIBUTE_NORETURN [[noreturn]]
+#      define CPP_ATTR_NORETURN [[noreturn]]
 #    else
-#      define CPP_ATTRIBUTE_NORETURN __attribute__((__noreturn__))
+#      define CPP_ATTR_NORETURN __attribute__((__noreturn__))
 #    endif
 #  else
-#    define CPP_ATTRIBUTE_NORETURN
+#    define CPP_ATTR_NORETURN
 #  endif
 #endif
 
-// TODO: CPP_ATTRIBUTE_CARRIES_DEPENDENCY
+// TODO: CPP_ATTR_CARRIES_DEPENDENCY
 
-// CPP_ATTRIBUTE_DEPRECATED indicates that the use of the name or entity declared with this attribute is allowed, but discouraged for some reason.
-// This attribute is allowed in declarations of classes, typedef-names, variables, non-static data members, functions, namespaces, enumerations, enumerators, and template specializations.
-// A name declared non-deprecated may be redeclared deprecated.
-// A name declared deprecated cannot be un-deprecated by redeclaring it without this attribute.
-#if !defined(CPP_ATTRIBUTE_DEPRECATED)
+// TODO: CPP_ATTR_DEPRECATED(reason)
+
+// CPP_ATTR_DEPRECATED indicates that the use of the name or entity declared with this attribute is allowed, but discouraged for some reason.
+#if !defined(CPP_ATTR_DEPRECATED)
 #  if defined(_MSC_VER)
 #    if (_MSC_VER >= 1900)
-#      define CPP_ATTRIBUTE_DEPRECATED [[deprecated]]
+#      define CPP_ATTR_DEPRECATED [[deprecated]]
 #    else
-#      define CPP_ATTRIBUTE_DEPRECATED __declspec(deprecated)
+#      define CPP_ATTR_DEPRECATED __declspec(deprecated)
 #    endif
 #  elif defined(__clang__)
 #    if ((__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 4)) && __cplusplus >= 201402L)
-#      define CPP_ATTRIBUTE_DEPRECATED [[deprecated]]
+#      define CPP_ATTR_DEPRECATED [[deprecated]]
 #    else
-#      define CPP_ATTRIBUTE_DEPRECATED __attribute__((__deprecated__))
+#      define CPP_ATTR_DEPRECATED __attribute__((__deprecated__))
 #    endif
 #  elif defined(__GNUC__)
 #    if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)) && __cplusplus >= 201402L)
-#      define CPP_ATTRIBUTE_DEPRECATED [[deprecated]]
+#      define CPP_ATTR_DEPRECATED [[deprecated]]
 #    else
-#      define CPP_ATTRIBUTE_DEPRECATED __attribute__((__deprecated__))
+#      define CPP_ATTR_DEPRECATED __attribute__((__deprecated__))
 #    endif
 #  else
-#    define CPP_ATTRIBUTE_DEPRECATED
+#    define CPP_ATTR_DEPRECATED
 #  endif
 #endif
 
-// CPP_ATTRIBUTE_FALLTHROUGH appears in a switch statement on a line of its own (technically as an attribute of a null statement), immediately before a case label.
-// Indicates that the fall through from the previous case label is intentional and should not be diagnosed by a compiler that warns on fallthrough.
-#if !defined(CPP_ATTRIBUTE_FALLTHROUGH)
+// CPP_ATTR_FALLTHROUGH indicates that the fall through from the previous case label is intentional and should not be diagnosed by a compiler that warns on fall-through.
+#if !defined(CPP_ATTR_FALLTHROUGH)
 #  if defined(_MSC_VER)
-#    if (_MSC_VER >= 1910 && _MSVC_LANG >= 201703L)
-#      define CPP_ATTRIBUTE_FALLTHROUGH [[fallthrough]]
+#    if (_MSC_VER >= 1910 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#      define CPP_ATTR_FALLTHROUGH [[fallthrough]]
 #    else
-#      define CPP_ATTRIBUTE_FALLTHROUGH
+#      define CPP_ATTR_FALLTHROUGH
 #    endif
 #  elif defined(__clang__)
 #    if ((__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 9)) && __cplusplus >= 201703L)
-#      define CPP_ATTRIBUTE_FALLTHROUGH [[fallthrough]]
+#      define CPP_ATTR_FALLTHROUGH [[fallthrough]]
 #    else
-#      define CPP_ATTRIBUTE_FALLTHROUGH
+#      define CPP_ATTR_FALLTHROUGH
 #    endif
 #  elif defined(__GNUC__)
 #    if (__GNUC__ > 7 && __cplusplus >= 201703L)
-#      define CPP_ATTRIBUTE_FALLTHROUGH [[fallthrough]]
+#      define CPP_ATTR_FALLTHROUGH [[fallthrough]]
 #    else
-#      define CPP_ATTRIBUTE_FALLTHROUGH
+#      define CPP_ATTR_FALLTHROUGH
 #    endif
 #  else
-#    define CPP_ATTRIBUTE_FALLTHROUGH
+#    define CPP_ATTR_FALLTHROUGH
 #  endif
 #endif
 
-// CPP_ATTRIBUTE_NODISCARD appears in a function declaration, enumeration declaration, or class declaration.
-// If a function declared nodiscard or a function returning an enumeration or class declared nodiscard by value is called from a discarded-value expression other than a cast to void, the compiler is encouraged to issue a warning.
-#if !defined(CPP_ATTRIBUTE_NODISCARD)
+// CPP_ATTR_NODISCARD encourages the compiler to issue a warning if the return value is discarded.
+#if !defined(CPP_ATTR_NODISCARD)
 #  if defined(_MSC_VER)
-#    if (_MSC_VER >= 1911 && _MSVC_LANG >= 201703L)
-#      define CPP_ATTRIBUTE_NODISCARD [[nodiscard]]
+#    if (_MSC_VER >= 1911 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#      define CPP_ATTR_NODISCARD [[nodiscard]]
 #    elif defined(_Check_return_)
-#      define CPP_ATTRIBUTE_NODISCARD _Check_return_
+#      define CPP_ATTR_NODISCARD _Check_return_
 #    else
-#      define CPP_ATTRIBUTE_NODISCARD
+#      define CPP_ATTR_NODISCARD
 #    endif
 #  elif defined(__clang__)
 #    if ((__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 9)) && __cplusplus >= 201703L)
-#      define CPP_ATTRIBUTE_NODISCARD [[nodiscard]]
+#      define CPP_ATTR_NODISCARD [[nodiscard]]
 #    else
-#      define CPP_ATTRIBUTE_NODISCARD __attribute__((__warn_unused_result__))
+#      define CPP_ATTR_NODISCARD __attribute__((__warn_unused_result__))
 #    endif
 #  elif defined(__GNUC__)
 #    if (__GNUC__ > 7 && __cplusplus >= 201703L)
-#      define CPP_ATTRIBUTE_NODISCARD [[nodiscard]]
+#      define CPP_ATTR_NODISCARD [[nodiscard]]
 #    else
-#      define CPP_ATTRIBUTE_NODISCARD __attribute__((__warn_unused_result__))
+#      define CPP_ATTR_NODISCARD __attribute__((__warn_unused_result__))
 #    endif
 #  else
-#    define CPP_ATTRIBUTE_NODISCARD
+#    define CPP_ATTR_NODISCARD
 #  endif
 #endif
 
-// CPP_ATTRIBUTE_MAYBE_UNUSED appears in the declaration of a class, a typedef­, a variable, a non­static data member, a function, an enumeration, or an enumerator.
-// If the compiler issues warnings on unused entities, that warning is suppressed for any entity declared maybe unused.
-#if !defined(CPP_ATTRIBUTE_MAYBE_UNUSED)
+// CPP_ATTR_MAYBE_UNUSED suppresses compiler warnings on unused entities, if any.
+#if !defined(CPP_ATTR_MAYBE_UNUSED)
 #  if defined(_MSC_VER)
-#    if (_MSC_VER >= 1911 && _MSVC_LANG >= 201703L)
-#      define CPP_ATTRIBUTE_MAYBE_UNUSED [[maybe_unused]]
+#    if (_MSC_VER >= 1911 && defined(_MSVC_LANG) &&_MSVC_LANG >= 201703L)
+#      define CPP_ATTR_MAYBE_UNUSED [[maybe_unused]]
 #    else
-#      define CPP_ATTRIBUTE_MAYBE_UNUSED __pragma(warning(suppress : 4100 4101 4189))
+#      define CPP_ATTR_MAYBE_UNUSED __pragma(warning(suppress : 4100 4101 4189))
 #    endif
 #  elif defined(__clang__)
 #    if ((__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 9)) && __cplusplus >= 201703L)
-#      define CPP_ATTRIBUTE_MAYBE_UNUSED [[maybe_unused]]
+#      define CPP_ATTR_MAYBE_UNUSED [[maybe_unused]]
 #    else
-#      define CPP_ATTRIBUTE_MAYBE_UNUSED __attribute__((__unused__))
+#      define CPP_ATTR_MAYBE_UNUSED __attribute__((__unused__))
 #    endif
 #  elif defined(__GNUC__)
 #    if (__GNUC__ > 7 && __cplusplus >= 201703L)
-#      define CPP_ATTRIBUTE_MAYBE_UNUSED [[maybe_unused]]
+#      define CPP_ATTR_MAYBE_UNUSED [[maybe_unused]]
 #    else
-#      define CPP_ATTRIBUTE_MAYBE_UNUSED __attribute__((__unused__))
+#      define CPP_ATTR_MAYBE_UNUSED __attribute__((__unused__))
 #    endif
 #  else
-#    define CPP_ATTRIBUTE_MAYBE_UNUSED
+#    define CPP_ATTR_MAYBE_UNUSED
 #  endif
 #endif
+
+// TODO: CPP_ATTR_LIKELY
+// TODO: CPP_ATTR_CARRIES_UNLIKELY
+// TODO: CPP_ATTR_CARRIES_NO_UNIQUE_ADDRESS

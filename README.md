@@ -1,53 +1,66 @@
-# Yet Another C++ Macros Library
+# Yet Another C++ Library
 
 ```text
-__     __      _____ _____  _____  __  __ _
-\ \   / //\   / ____|  __ \|  __ \|  \/  | |
- \ \_/ //  \ | |    | |__) | |__) | \  / | |
-  \   // /\ \| |    |  ___/|  ___/| |\/| | |
-   | |/ ____ \ |____| |    | |    | |  | | |____
-   |_/_/    \_\_____|_|    |_|    |_|  |_|______|
+__     __      _____ _____  _____  _
+\ \   / //\   / ____|  __ \|  __ \| |
+ \ \_/ //  \ | |    | |__) | |__) | |
+  \   // /\ \| |    |  ___/|  ___/| |
+   | |/ ____ \ |____| |    | |    | |____
+   |_/_/    \_\_____|_|    |_|    |______
 ```
 
 Branch | Linux/OSX | Windows | License | Codacy
 -------|-----------|---------|---------|-------
-master |[![Build Status](https://travis-ci.org/Neargye/yacppml.svg?branch=master)](https://travis-ci.org/Neargye/yacppml)|[![Build status](https://ci.appveyor.com/api/projects/status/irdag2r6tsubtthx/branch/master?svg=true)](https://ci.appveyor.com/project/Neargye/yacppml/branch/master)|[![License](https://img.shields.io/github/license/Neargye/yacppml.svg)](LICENSE)|[![Codacy Badge](https://api.codacy.com/project/badge/Grade/70dfd3b3bb14434a8abffd1bb9fb593c)](https://www.codacy.com/app/Neargye/yacppml?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Neargye/yacppml&amp;utm_campaign=Badge_Grade)
+master |[![Build Status](https://travis-ci.org/Neargye/yacppl.svg?branch=master)](https://travis-ci.org/Neargye/yacppl)|[![Build status](https://ci.appveyor.com/api/projects/status/7dmf3ri22cxfoaxm/branch/master?svg=true)](https://ci.appveyor.com/project/Neargye/yacppl/branch/master)|[![License](https://img.shields.io/github/license/Neargye/yacppl.svg)](LICENSE)|[![Codacy Badge](https://api.codacy.com/project/badge/Grade/70dfd3b3bb14434a8abffd1bb9fb593c)](https://www.codacy.com/app/Neargye/yacppl?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Neargye/yacppl&amp;utm_campaign=Badge_Grade)
 
-Сollection of operators-like macros С++11:
-
-* [nameof](https://github.com/Neargye/nameof) - Simple name of a variable, type, member, function, macros and etc.
+## [Unused](include/unused.hpp) - Macros with varying number of arguments to avoid "unused variable" warnings
 
 ```cpp
-std::cout << NAMEOF(person.address.zip_code) << std::endl; // prints "zip_code"
+auto a = 0;
+UNUSED(a); // No warning: unused variable 'a'.
 ```
 
-* [scope_guard](https://github.com/Neargye/scope_guard) - Scope Guard & Defer C++.
+## [Cpp Attributes](include/cpp_attributes.hpp) - Cross-compiler C++ attributes
+
+* CPP_ATTR_NORETURN - indicates that the function does not return.
 
 ```cpp
-std::fstream file("test.txt");
-DEFER{ file.close(); }; // File closes when exit the enclosing scope or errors occure.
+CPP_ATTR_NORETURN void foo() { std::terminate(); }
 ```
 
-* [state_save](https://github.com/Neargye/state_save) - Saves the origin variable value and restores on scope exit, undoes any changes that could occure to the object.
+* CPP_ATTR_DEPRECATED - indicates that the use of the name or entity declared with this attribute is allowed, but discouraged for some reason.
 
 ```cpp
-void Foo(A& a)
-  STATE_SAVER(a);
-  ... // Alter state from non-const functions.
-  ... // Other code.
-  // Original state automatically restored.
+CPP_ATTR_DEPRECATED void foo() {}
+```
+
+* CPP_ATTR_FALLTHROUGH - indicates that the fall through from the previous case label is intentional and should not be diagnosed by a compiler that warns on fall-through.
+
+```cpp
+switch (expression) {
+  case 1:
+    CPP_ATTR_FALLTHROUGH
+  default:
+    break;
 }
 ```
 
-Сollection of useful С++11 macros:
-
-* [cpp_attributes](include/cpp_attributes.hpp) - Cross-compiler C++ attributes.
-
-* [unused](include/unused.hpp) - Macros with varying number of arguments to avoid "unused variable" warnings.
+* CPP_ATTR_NODISCARD - encourages the compiler to issue a warning if the return value is discarded.
 
 ```cpp
-auto d = 0;
-UNUSED(d); // No warning: unused variable 'd'.
+CPP_ATTR_NODISCARD std::unique_ptr<int> foo() { return std::make_unique<int>(42); }
 ```
+
+* CPP_ATTR_MAYBE_UNUSED - suppresses compiler warnings on unused entities, if any.
+
+```cpp
+CPP_ATTR_MAYBE_UNUSED int a = foo();
+```
+
+## Compiler compatibility
+
+* GCC
+* Clang
+* MSVC
 
 ## Licensed under the [MIT License](LICENSE)

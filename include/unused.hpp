@@ -34,10 +34,10 @@ namespace unused {
      (defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 4)) && __cplusplus >= 201402L) || \
      (defined(__GNUC__) && __GNUC__ >= 5))
 template <typename... Args>
-inline constexpr void Unused(const Args&...) {}
+constexpr void Unused(const Args&...) noexcept {}
 #else
 template <typename... Args>
-inline void Unused(const Args&...) {}
+inline void Unused(const Args&...) noexcept {}
 #endif
 
 } // namespace unused

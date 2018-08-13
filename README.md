@@ -20,41 +20,41 @@ auto a = 0;
 UNUSED(a); // No warning: unused variable 'a'.
 ```
 
-## [Cpp Attributes](include/cpp_attributes.hpp) - Cross-compiler C++ attributes
+## [Cpp Attributes](include/attributes.hpp) - Cross-compiler C++ attributes
 
-* CPP_ATTR_NORETURN - indicates that the function does not return.
-
-```cpp
-CPP_ATTR_NORETURN void foo() { std::terminate(); }
-```
-
-* CPP_ATTR_DEPRECATED - indicates that the use of the name or entity declared with this attribute is allowed, but discouraged for some reason.
+* ATTR_NORETURN - indicates that the function does not return.
 
 ```cpp
-CPP_ATTR_DEPRECATED void foo() {}
+ATTR_NORETURN void foo() { std::terminate(); }
 ```
 
-* CPP_ATTR_FALLTHROUGH - indicates that the fall through from the previous case label is intentional and should not be diagnosed by a compiler that warns on fall-through.
+* ATTR_DEPRECATED - indicates that the use of the name or entity declared with this attribute is allowed, but discouraged for some reason.
+
+```cpp
+ATTR_DEPRECATED void foo() {}
+```
+
+* ATTR_FALLTHROUGH - indicates that the fall through from the previous case label is intentional and should not be diagnosed by a compiler that warns on fall-through.
 
 ```cpp
 switch (expression) {
   case 1:
-    CPP_ATTR_FALLTHROUGH
+    ATTR_FALLTHROUGH
   default:
     break;
 }
 ```
 
-* CPP_ATTR_NODISCARD - encourages the compiler to issue a warning if the return value is discarded.
+* ATTR_NODISCARD - encourages the compiler to issue a warning if the return value is discarded.
 
 ```cpp
-CPP_ATTR_NODISCARD std::unique_ptr<int> foo() { return std::make_unique<int>(42); }
+ATTR_NODISCARD std::unique_ptr<int> foo() { return std::make_unique<int>(42); }
 ```
 
-* CPP_ATTR_MAYBE_UNUSED - suppresses compiler warnings on unused entities, if any.
+* ATTR_MAYBE_UNUSED - suppresses compiler warnings on unused entities, if any.
 
 ```cpp
-CPP_ATTR_MAYBE_UNUSED int a = foo();
+ATTR_MAYBE_UNUSED int a = foo();
 ```
 
 ## Compiler compatibility

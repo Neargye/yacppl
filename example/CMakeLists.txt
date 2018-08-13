@@ -9,11 +9,11 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     target_compile_options(${PROJECT_NAME}_example_unused PUBLIC /WX)
 endif()
 
-add_executable(${PROJECT_NAME}_example_cpp_attributes
-        ${CMAKE_SOURCE_DIR}/include/cpp_attributes.hpp
-        cpp_attributes.cpp)
+add_executable(${PROJECT_NAME}_example_attributes
+        ${CMAKE_SOURCE_DIR}/include/attributes.hpp
+        attributes.cpp)
 if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-    target_compile_options(${PROJECT_NAME}_example_cpp_attributes PUBLIC -Werror)
+    target_compile_options(${PROJECT_NAME}_example_attributes PUBLIC -Werror)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    target_compile_options(${PROJECT_NAME}_example_cpp_attributes PUBLIC /WX)
+    target_compile_options(${PROJECT_NAME}_example_attributes PUBLIC /WX)
 endif()

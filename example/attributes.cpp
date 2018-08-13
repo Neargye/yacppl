@@ -1,4 +1,4 @@
-// cpp_attributes example
+// attributes example
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // Copyright (c) 2018 Daniil Goncharov <neargye@gmail.com>.
@@ -21,28 +21,28 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <cpp_attributes.hpp>
+#include <attributes.hpp>
 
 #include <exception>
 
-CPP_ATTR_MAYBE_UNUSED float foo1(CPP_ATTR_MAYBE_UNUSED int i) {  // No warning: unused parameter 'i'.
+ATTR_MAYBE_UNUSED float foo1(ATTR_MAYBE_UNUSED int i) {  // No warning: unused parameter 'i'.
   return 42.0f;
 }
 
-CPP_ATTR_NORETURN void foo2() { std::terminate(); }
+ATTR_NORETURN void foo2() { std::terminate(); }
 
-CPP_ATTR_DEPRECATED void foo3() {}
+ATTR_DEPRECATED void foo3() {}
 
-// TODO: CPP_ATTR_DEPRECATED("deprecated") void foo4() {}
+// TODO: ATTR_DEPRECATED("deprecated") void foo4() {}
 
-CPP_ATTR_NODISCARD int foo5() { return 42; }
+ATTR_NODISCARD int foo5() { return 42; }
 
 int main() {
-  CPP_ATTR_MAYBE_UNUSED int a = foo5();  // No warning: unused variable 'a'.
+  ATTR_MAYBE_UNUSED int a = foo5();  // No warning: unused variable 'a'.
 
   switch (a) {
     case 1:
-      CPP_ATTR_FALLTHROUGH
+      ATTR_FALLTHROUGH
     default:
       break;
   }

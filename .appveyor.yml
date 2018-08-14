@@ -1,5 +1,7 @@
 version: "{branch} #{build}"
 
+shallow_clone: true
+
 image:
   - Visual Studio 2017
 
@@ -10,11 +12,6 @@ platform:
 configuration:
   - Debug
   - Release
-
-shallow_clone: true
-
-matrix:
-  fast_finish: false
 
 environment:
   matrix:

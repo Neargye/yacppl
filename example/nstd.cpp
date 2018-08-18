@@ -22,6 +22,7 @@
 // SOFTWARE.
 
 #include <nstd.hpp>
+
 #include <type_traits>
 #include <iostream>
 
@@ -57,21 +58,19 @@ struct D {
 };
 
 int main() {
-  static_assert(std::is_same<nstd::remove_all_pointers_t<int**>, int>::value, "what?");
+  static_assert(std::is_same<nstd::remove_all_pointers<int**>::type, int>::value, "what?");
   static_assert(std::is_same<nstd::remove_all_pointers_t<int* const* volatile *>, int>::value, "what?");
 
-  static_assert(std::is_same<nstd::remove_all_cvrp_t<const volatile int* const* volatile****>, int>::value, "what?");
-
-  static_assert(std::is_same<nstd::remove_all_cvrp_t<const volatile int&>, int>::value, "what?");
-
-  const int* volatile* i[10];
+  const volatile int* const* volatile**** i[10];
   const auto& r = &i;
   static_assert(std::is_same<nstd::remove_all_cvrpe_t<decltype(i)>, int>::value, "what?");
   static_assert(std::is_same<nstd::remove_all_cvrpe_t<decltype(r)>, int>::value, "what?");
 
-  static_assert(nstd::is_same_signed_v<unsigned int, unsigned short>, "what?");
+  static_assert(nstd::is_same_signed<unsigned int, unsigned short>::value, "what?");
+  static_assert(!nstd::is_same_signed<unsigned int, signed short>::value, "what?");
+#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
   static_assert(nstd::is_same_signed_v<signed int, signed short>, "what?");
-  static_assert(!nstd::is_same_signed_v<unsigned int, signed short>, "what?");
+#endif
 
   A a;
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(a)), A&&>::value, "what?");

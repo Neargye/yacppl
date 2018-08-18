@@ -94,11 +94,13 @@ struct is_same_signed
     : std::integral_constant<bool, std::is_signed<T>::value == std::is_signed<U>::value ||
                                        std::is_unsigned<T>::value == std::is_unsigned<U>::value> {};
 
+#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
 template <typename T, typename U>
-#if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
+#  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
 inline
-#endif
+#  endif
 constexpr bool is_same_signed_v = is_same_signed<T, U>::value;
+#endif
 
 template <typename T>
 constexpr typename std::conditional<!std::is_nothrow_move_assignable<T>::value &&

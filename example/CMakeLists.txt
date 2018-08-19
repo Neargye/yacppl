@@ -20,6 +20,7 @@ endif()
 
 add_executable(${PROJECT_NAME}_example_nstd
         ${CMAKE_SOURCE_DIR}/include/nstd.hpp
+        ${CMAKE_SOURCE_DIR}/include/unused.hpp
         nstd.cpp)
 if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
     target_compile_options(${PROJECT_NAME}_example_nstd PUBLIC -Werror)

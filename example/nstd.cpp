@@ -23,6 +23,7 @@
 
 #include <nstd.hpp>
 
+#include <unused.hpp>
 #include <type_traits>
 #include <iostream>
 
@@ -62,8 +63,11 @@ int main() {
   static_assert(std::is_same<nstd::remove_all_pointers_t<int* const* volatile *>, int>::value, "what?");
 
   const volatile int* const* volatile**** i[10];
+  UNUSED(i);
+  static_assert(std::is_same<nstd::remove_all_cvrpe<decltype(i)>::type, int>::value, "what?");
+
   const auto& r = &i;
-  static_assert(std::is_same<nstd::remove_all_cvrpe_t<decltype(i)>, int>::value, "what?");
+  UNUSED(r);
   static_assert(std::is_same<nstd::remove_all_cvrpe_t<decltype(r)>, int>::value, "what?");
 
   static_assert(nstd::is_same_signed<unsigned int, unsigned short>::value, "what?");
@@ -73,12 +77,19 @@ int main() {
 #endif
 
   A a;
+  UNUSED(a);
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(a)), A&&>::value, "what?");
+
   B b;
+  UNUSED(b);
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(b)), const B&>::value, "what?");
+
   C c;
+  UNUSED(c);
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(c)), C&&>::value, "what?");
+
   D d;
+  UNUSED(d);
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(d)), const D&>::value, "what?");
 
   return 0;

@@ -20,7 +20,7 @@ auto a = 0;
 UNUSED(a); // No warning: unused variable 'a'.
 ```
 
-## [Cpp Attributes](include/attributes.hpp) - Cross-compiler C++ attributes
+## [Attributes](include/attributes.hpp) - Cross-compiler C++98/C++11/C++14/C++17/C++20 attributes
 
 * ATTR_NORETURN - indicates that the function does not return.
 
@@ -55,6 +55,48 @@ ATTR_NODISCARD std::unique_ptr<int> foo() { return std::make_unique<int>(42); }
 
 ```cpp
 ATTR_MAYBE_UNUSED int a = foo();
+```
+
+## [NSTD](include/nstd.hpp) - STD like stuff
+
+* remove_all_p - removes all pointer from the given type.
+
+```cpp
+static_assert(std::is_same<nstd::remove_all_p<int**>::type, int>::value, "");
+static_assert(std::is_same<nstd::remove_all_p_t<int* const* volatile *>, int>::value, "what?");
+```
+
+* remove_all_cvrp - removes all const, volatile, reference, pointer specifiers from the given type.
+
+```cpp
+const volatile int* const* volatile**** i;
+static_assert(std::is_same<nstd::remove_all_cvrpe<decltype(i)>::type, int>::value, "");
+
+const auto& r = &i;
+static_assert(std::is_same<nstd::remove_all_cvrpe_t<decltype(r)>, int>::value, "");
+```
+
+* remove_all_cvrpe - removes all const, volatile, reference, pointer, array extents specifiers from the given type.
+
+```cpp
+const volatile int* const* volatile**** i[10];
+static_assert(std::is_same<nstd::remove_all_cvrpe<decltype(i)>::type, int>::value, "");
+
+const auto& r = &i;
+static_assert(std::is_same<nstd::remove_all_cvrpe_t<decltype(r)>, int>::value, "");
+```
+
+* is_same_signed - checks if two types are the same signed/unsigned.
+
+```cpp
+static_assert(nstd::is_same_signed<unsigned int, unsigned short>::value, "");
+static_assert(!nstd::is_same_signed_v<unsigned int, signed short>, "");
+```
+
+* move_assign_if_noexcept - returns an rvalue reference to arg, unless copy assign is a better option than move assign to provide at least a strong exception guarantee.
+
+```cpp
+a = nstd::move_assign_if_noexcept(b);
 ```
 
 ## Compiler compatibility

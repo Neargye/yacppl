@@ -4,6 +4,7 @@
 // | . ` |\___ \   | |  | |  | | | |  |_   _|_   _|
 // | |\  |____) |  | |  | |__| | | |____|_|   |_|
 // |_| \_|_____/   |_|  |_____/   \_____|
+// vesion 0.1.0
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // Copyright (c) 2018 Daniil Goncharov <neargye@gmail.com>.
@@ -43,18 +44,11 @@ using identity_t = typename identity<T>::type;
 
 // Removes all pointer from the given type.
 template <typename T>
-struct remove_all_pointers
+struct remove_all_p
     : std::conditional<std::is_pointer<T>::value,
-          remove_all_pointers<typename std::remove_pointer<T>::type>,
+          remove_all_p<typename std::remove_pointer<T>::type>,
           identity<T>
               >::type {};
-
-template <typename T>
-using remove_all_pointers_t = typename remove_all_pointers<T>::type;
-
-// Removes all pointer from the given type
-template <typename T>
-using remove_all_p = remove_all_pointers<T>;
 
 template <typename T>
 using remove_all_p_t = typename remove_all_p<T>::type;

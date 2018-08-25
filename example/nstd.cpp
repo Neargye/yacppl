@@ -59,16 +59,27 @@ struct D {
 };
 
 int main() {
-  static_assert(std::is_same<nstd::remove_all_pointers<int**>::type, int>::value, "what?");
-  static_assert(std::is_same<nstd::remove_all_pointers_t<int* const* volatile *>, int>::value, "what?");
+  static_assert(std::is_same<nstd::remove_all_p<int**>::type, int>::value, "what?");
+
+  int* const* volatile * p;
+  UNUSED(p);
+  static_assert(std::is_same<nstd::remove_all_p_t<decltype(p)>, int>::value, "what?");
+
+  const auto& rp = &p;
+  UNUSED(rp);
+  static_assert(std::is_same<nstd::remove_all_cvrp<decltype(rp)>::type, int>::value, "what?");
+
+  const auto& rp_ = &rp;
+  UNUSED(rp_);
+  static_assert(std::is_same<nstd::remove_all_cvrp_t<decltype(rp_)>, int>::value, "what?");
 
   const volatile int* const* volatile**** i[10];
   UNUSED(i);
   static_assert(std::is_same<nstd::remove_all_cvrpe<decltype(i)>::type, int>::value, "what?");
 
-  const auto& r = &i;
-  UNUSED(r);
-  static_assert(std::is_same<nstd::remove_all_cvrpe_t<decltype(r)>, int>::value, "what?");
+  const auto& ri = &i;
+  UNUSED(ri);
+  static_assert(std::is_same<nstd::remove_all_cvrpe_t<decltype(ri)>, int>::value, "what?");
 
   static_assert(nstd::is_same_signed<unsigned int, unsigned short>::value, "what?");
   static_assert(!nstd::is_same_signed<unsigned int, signed short>::value, "what?");

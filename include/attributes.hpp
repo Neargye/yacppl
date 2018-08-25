@@ -4,6 +4,7 @@
 //   / /\ \| __| __| '__| | '_ \| | | | __/ _ \/ __| | |  |_   _|_   _|
 //  / ____ \ |_| |_| |  | | |_) | |_| | ||  __/\__ \ | |____|_|   |_|
 // /_/    \_\__|\__|_|  |_|_.__/ \__,_|\__\___||___/  \_____|
+// vesion 0.1.0
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // Copyright (c) 2018 Daniil Goncharov <neargye@gmail.com>.
@@ -30,17 +31,17 @@
 
 // ATTR_NORETURN indicates that the function does not return.
 #if !defined(ATTR_NORETURN)
-#  if defined(_MSC_VER)
-#    if (_MSC_FULL_VER >= 190024210)
-#      define ATTR_NORETURN [[noreturn]]
-#    else
-#      define ATTR_NORETURN __declspec(noreturn)
-#    endif
-#  elif defined(__clang__)
+#  if defined(__clang__)
 #    if ((__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 3)) && __cplusplus >= 201103L)
 #      define ATTR_NORETURN [[noreturn]]
 #    else
 #      define ATTR_NORETURN __attribute__((__noreturn__))
+#    endif
+#  elif defined(_MSC_VER)
+#    if (_MSC_VER >= 1910)
+#      define ATTR_NORETURN [[noreturn]]
+#    else
+#      define ATTR_NORETURN __declspec(noreturn)
 #    endif
 #  elif defined(__GNUC__)
 #    if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)) && __cplusplus >= 201103L)
@@ -54,22 +55,21 @@
 #endif
 
 // TODO: ATTR_CARRIES_DEPENDENCY
-
 // TODO: ATTR_DEPRECATED(reason)
 
 // ATTR_DEPRECATED indicates that the use of the name or entity declared with this attribute is allowed, but discouraged for some reason.
 #if !defined(ATTR_DEPRECATED)
-#  if defined(_MSC_VER)
-#    if (_MSC_VER >= 1900)
-#      define ATTR_DEPRECATED [[deprecated]]
-#    else
-#      define ATTR_DEPRECATED __declspec(deprecated)
-#    endif
-#  elif defined(__clang__)
+#  if defined(__clang__)
 #    if ((__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 4)) && __cplusplus >= 201402L)
 #      define ATTR_DEPRECATED [[deprecated]]
 #    else
 #      define ATTR_DEPRECATED __attribute__((__deprecated__))
+#    endif
+#  elif defined(_MSC_VER)
+#    if (_MSC_VER >= 1900)
+#      define ATTR_DEPRECATED [[deprecated]]
+#    else
+#      define ATTR_DEPRECATED __declspec(deprecated)
 #    endif
 #  elif defined(__GNUC__)
 #    if ((__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)) && __cplusplus >= 201402L)
@@ -84,20 +84,20 @@
 
 // ATTR_FALLTHROUGH indicates that the fall through from the previous case label is intentional and should not be diagnosed by a compiler that warns on fall-through.
 #if !defined(ATTR_FALLTHROUGH)
-#  if defined(_MSC_VER)
-#    if (_MSC_VER >= 1910 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
-#      define ATTR_FALLTHROUGH [[fallthrough]]
-#    else
-#      define ATTR_FALLTHROUGH
-#    endif
-#  elif defined(__clang__)
+#  if defined(__clang__)
 #    if ((__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 9)) && __cplusplus >= 201703L)
 #      define ATTR_FALLTHROUGH [[fallthrough]]
 #    else
 #      define ATTR_FALLTHROUGH
 #    endif
+#  elif defined(_MSC_VER)
+#    if (_MSC_VER >= 1910 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#      define ATTR_FALLTHROUGH [[fallthrough]]
+#    else
+#      define ATTR_FALLTHROUGH
+#    endif
 #  elif defined(__GNUC__)
-#    if (__GNUC__ > 7 && __cplusplus >= 201703L)
+#    if (__GNUC__ >= 7 && __cplusplus >= 201703L)
 #      define ATTR_FALLTHROUGH [[fallthrough]]
 #    else
 #      define ATTR_FALLTHROUGH
@@ -109,7 +109,13 @@
 
 // ATTR_NODISCARD encourages the compiler to issue a warning if the return value is discarded.
 #if !defined(ATTR_NODISCARD)
-#  if defined(_MSC_VER)
+#  if defined(__clang__)
+#    if ((__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 9)) && __cplusplus >= 201703L)
+#      define ATTR_NODISCARD [[nodiscard]]
+#    else
+#      define ATTR_NODISCARD __attribute__((__warn_unused_result__))
+#    endif
+#  elif defined(_MSC_VER)
 #    if (_MSC_VER >= 1911 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
 #      define ATTR_NODISCARD [[nodiscard]]
 #    elif defined(_Check_return_)
@@ -117,14 +123,8 @@
 #    else
 #      define ATTR_NODISCARD
 #    endif
-#  elif defined(__clang__)
-#    if ((__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 9)) && __cplusplus >= 201703L)
-#      define ATTR_NODISCARD [[nodiscard]]
-#    else
-#      define ATTR_NODISCARD __attribute__((__warn_unused_result__))
-#    endif
 #  elif defined(__GNUC__)
-#    if (__GNUC__ > 7 && __cplusplus >= 201703L)
+#    if (__GNUC__ >= 7 && __cplusplus >= 201703L)
 #      define ATTR_NODISCARD [[nodiscard]]
 #    else
 #      define ATTR_NODISCARD __attribute__((__warn_unused_result__))
@@ -136,20 +136,20 @@
 
 // ATTR_MAYBE_UNUSED suppresses compiler warnings on unused entities, if any.
 #if !defined(ATTR_MAYBE_UNUSED)
-#  if defined(_MSC_VER)
-#    if (_MSC_VER >= 1911 && defined(_MSVC_LANG) &&_MSVC_LANG >= 201703L)
-#      define ATTR_MAYBE_UNUSED [[maybe_unused]]
-#    else
-#      define ATTR_MAYBE_UNUSED __pragma(warning(suppress : 4100 4101 4189))
-#    endif
-#  elif defined(__clang__)
+#  if defined(__clang__)
 #    if ((__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 9)) && __cplusplus >= 201703L)
 #      define ATTR_MAYBE_UNUSED [[maybe_unused]]
 #    else
 #      define ATTR_MAYBE_UNUSED __attribute__((__unused__))
 #    endif
+#  elif defined(_MSC_VER)
+#    if (_MSC_VER >= 1911 && defined(_MSVC_LANG) &&_MSVC_LANG >= 201703L)
+#      define ATTR_MAYBE_UNUSED [[maybe_unused]]
+#    else
+#      define ATTR_MAYBE_UNUSED __pragma(warning(suppress : 4100 4101 4189))
+#    endif
 #  elif defined(__GNUC__)
-#    if (__GNUC__ > 7 && __cplusplus >= 201703L)
+#    if (__GNUC__ >= 7 && __cplusplus >= 201703L)
 #      define ATTR_MAYBE_UNUSED [[maybe_unused]]
 #    else
 #      define ATTR_MAYBE_UNUSED __attribute__((__unused__))

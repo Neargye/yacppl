@@ -4,6 +4,7 @@
 // | |  | | '_ \| | | / __|/ _ \/ _` | | |  |_   _|_   _|
 // | |__| | | | | |_| \__ \  __/ (_| | | |____|_|   |_|
 //  \____/|_| |_|\__,_|___/\___|\__,_|  \_____|
+// vesion 0.1.0
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // Copyright (c) 2018 Daniil Goncharov <neargye@gmail.com>.
@@ -30,14 +31,12 @@
 
 namespace unused {
 
-#if ((defined(_MSC_VER) && _MSC_VER >= 1910) ||                                                                                   \
-     (defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 4)) && __cplusplus >= 201402L) || \
-     (defined(__GNUC__) && __GNUC__ >= 5))
-template <typename... Args>
-constexpr void Unused(const Args&...) noexcept {}
+#if defined(__cpp_constexpr) && __cpp_constexpr >= 201304L
+template <typename... A>
+constexpr void Unused(const A&...) noexcept {}
 #else
-template <typename... Args>
-inline void Unused(const Args&...) noexcept {}
+template <typename... A>
+inline void Unused(const A&...) noexcept {}
 #endif
 
 } // namespace unused

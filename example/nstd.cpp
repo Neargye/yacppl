@@ -25,6 +25,7 @@
 
 #include <unused.hpp>
 #include <type_traits>
+#include <string>
 
 struct A {};
 
@@ -57,6 +58,8 @@ struct D {
   }
 };
 
+using S = std::string;
+
 int main() {
   static_assert(std::is_same<nstd::remove_all_p<int**>::type, int>::value, "what?");
 
@@ -86,6 +89,17 @@ int main() {
   static_assert(nstd::is_same_signed_v<signed int, signed short>, "what?");
 #endif
 
+  static_assert(nstd::is_template<std::string>::value, "what?");
+  static_assert(!nstd::is_template<A>::value, "what?");
+#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
+  static_assert(nstd::is_template_v<S>, "what?");
+#endif
+
+  static_assert(nstd::template_nargs<A>::value == 0, "what?");
+  static_assert(nstd::template_nargs<std::string>::value == 3, "what?");
+#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
+  static_assert(nstd::template_nargs_v<S> == 3, "what?");
+#endif
   A a;
   UNUSED(a);
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(a)), A&&>::value, "what?");

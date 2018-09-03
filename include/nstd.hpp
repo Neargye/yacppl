@@ -30,7 +30,6 @@
 #pragma once
 
 #include <type_traits>
-#include <utility>
 
 namespace nstd {
 
@@ -55,18 +54,16 @@ using remove_all_p_t = typename remove_all_p<T>::type;
 
 // Removes const, volatile, reference specifiers from the given type.
 template <typename T>
-struct remove_cvr {
-  using type = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
-};
+struct remove_cvr
+    : std::remove_cv<typename std::remove_reference<T>::type> {};
 
 template <typename T>
 using remove_cvr_t = typename remove_cvr<T>::type;
 
 // Removes all const, volatile, reference, pointer specifiers from the given type.
 template <typename T>
-struct remove_all_cvrp {
-  using type = typename remove_cvr<typename remove_all_p<typename remove_cvr<T>::type>::type>::type;
-};
+struct remove_all_cvrp
+    : remove_cvr<typename remove_all_p<typename remove_cvr<T>::type>::type> {};
 
 template <typename T>
 using remove_all_cvrp_t = typename remove_all_cvrp<T>::type;

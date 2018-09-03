@@ -4,7 +4,7 @@
 // | . ` |\___ \   | |  | |  | | | |  |_   _|_   _|
 // | |\  |____) |  | |  | |__| | | |____|_|   |_|
 // |_| \_|_____/   |_|  |_____/   \_____|
-// vesion 0.1.0
+// vesion 0.1.1
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // Copyright (c) 2018 Daniil Goncharov <neargye@gmail.com>.

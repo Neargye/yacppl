@@ -1,20 +1,18 @@
 ﻿cmake_minimum_required(VERSION 3.2)
-include(CheckCXXCompilerFlag)
-project(yacppl)
 
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+include(GNUInstallDirs)
 
-if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-    add_compile_options(-Wall -Wextra -pedantic-errors)
-    set(CMAKE_VERBOSE_MAKEFILE ON)
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    add_compile_options(/W4)
-    check_cxx_compiler_flag(/permissive HAS_PERMISSIVE_FLAG)
-    if(HAS_PERMISSIVE_FLAG)
-        add_compile_options(/permissive-)
-    endif()
+project(yacppl LANGUAGES CXX)
+set(package_name ${PROJECT_NAME})
+set(include_source_dir "${CMAKE_SOURCE_DIR}/include")
+
+option(YACPPL_OPT_BUILD_EXAMPLES "Build yacppl examples" ON)
+
+add_library(${package_name} INTERFACE)
+target_include_directories(${package_name} INTERFACE "$<BUILD_INTERFACE:${include_source_dir}>")
+
+if(YACPPL_OPT_BUILD_EXAMPLES)
+    add_subdirectory(example)
 endif()
 
-add_subdirectory(example)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

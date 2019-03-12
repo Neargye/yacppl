@@ -4,10 +4,11 @@
 // | |  | | '_ \| | | / __|/ _ \/ _` | | |  |_   _|_   _|
 // | |__| | | | | |_| \__ \  __/ (_| | | |____|_|   |_|
 //  \____/|_| |_|\__,_|___/\___|\__,_|  \_____|
-// vesion 0.1.0
+// vesion 0.2.0
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright (c) 2018 Daniil Goncharov <neargye@gmail.com>.
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2018 - 2019 Daniil Goncharov <neargye@gmail.com>.
 //
 // Permission is hereby  granted, free of charge, to any  person obtaining a copy
 // of this software and associated  documentation files (the "Software"), to deal
@@ -29,22 +30,24 @@
 
 #pragma once
 
-namespace unused {
-
 #if defined(__cpp_constexpr) && __cpp_constexpr >= 201304L
-template <typename... A>
-constexpr void Unused(const A&...) noexcept {}
+#  define UNUSED_CONSTEXPR constexpr
 #else
-template <typename... A>
-inline void Unused(const A&...) noexcept {}
+#  define UNUSED_CONSTEXPR inline
 #endif
 
-} // namespace unused
+namespace yal {
+
+// Function with varying number of arguments to avoid "unused variable" warnings.
+template <typename... A>
+UNUSED_CONSTEXPR void unused(const A&...) noexcept {}
+
+} // namespace yal
 
 #if defined(_MSC_VER)
-// UNUSED macros with varying number of arguments to avoid "unused variable" warnings.
+// Macros with varying number of arguments to avoid "unused variable" warnings.
 #  define UNUSED(...) ((void)(__VA_ARGS__));
 #else
-// UNUSED macros with varying number of arguments to avoid "unused variable" warnings.
-#  define UNUSED(...) (decltype(::unused::Unused(__VA_ARGS__))());
+// Macros with varying number of arguments to avoid "unused variable" warnings.
+#  define UNUSED(...) (decltype(::yal::unused(__VA_ARGS__))());
 #endif

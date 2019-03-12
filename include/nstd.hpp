@@ -4,10 +4,11 @@
 // | . ` |\___ \   | |  | |  | | | |  |_   _|_   _|
 // | |\  |____) |  | |  | |__| | | |____|_|   |_|
 // |_| \_|_____/   |_|  |_____/   \_____|
-// vesion 0.1.1
+// vesion 0.2.0
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright (c) 2018 Daniil Goncharov <neargye@gmail.com>.
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2018 - 2019 Daniil Goncharov <neargye@gmail.com>.
 //
 // Permission is hereby  granted, free of charge, to any  person obtaining a copy
 // of this software and associated  documentation files (the "Software"), to deal
@@ -31,7 +32,7 @@
 
 #include <type_traits>
 
-namespace nstd {
+namespace yal {
 
 template <typename T>
 struct identity {
@@ -133,4 +134,4 @@ move_assign_if_noexcept(T& x) noexcept {
   return static_cast<typename std::remove_reference<T>::type&&>(x);
 }
 
-} // namespace nstd
+} // namespace yal

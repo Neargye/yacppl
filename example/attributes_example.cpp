@@ -1,7 +1,6 @@
-// unused example
-//
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// Copyright (c) 2018 Daniil Goncharov <neargye@gmail.com>.
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2018 - 2019 Daniil Goncharov <neargye@gmail.com>.
 //
 // Permission is hereby  granted, free of charge, to any  person obtaining a copy
 // of this software and associated  documentation files (the "Software"), to deal
@@ -21,20 +20,31 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <unused.hpp>
+#include <attributes.hpp>
 
-void foo_unused(int i) {
-  UNUSED(i); // No warning: unused parameter 'i'.
+#include <exception>
+
+ATTR_MAYBE_UNUSED float foo1(ATTR_MAYBE_UNUSED int i) {  // No warning: unused parameter 'i'.
+  return 42.0f;
 }
 
-int main() {
-  int a = 0;
-  float b = 0.0f;
-  char c[] = "test";
-  UNUSED(a, b, c); // No warning: unused variable 'a', 'b', 'c'.
+ATTR_NORETURN void foo2() { std::terminate(); }
 
-  int d = 0;
-  UNUSED(d); // No warning: unused variable 'd'.
+ATTR_DEPRECATED void foo3() {}
+
+// TODO: ATTR_DEPRECATED("deprecated") void foo4() {}
+
+ATTR_NODISCARD int foo5() { return 42; }
+
+int main() {
+  ATTR_MAYBE_UNUSED int a = foo5();  // No warning: unused variable 'a'.
+
+  switch (a) {
+    case 1:
+      ATTR_FALLTHROUGH
+    default:
+      break;
+  }
 
   return 0;
 }

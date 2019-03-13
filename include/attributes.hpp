@@ -150,7 +150,7 @@
 #      define ATTR_MAYBE_UNUSED __attribute__((__unused__))
 #    endif
 #  elif defined(_MSC_VER)
-#    if _MSC_VER >= 1911 && defined(_MSVC_LANG) &&_MSVC_LANG >= 201703L
+#    if _MSC_VER >= 1911 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
 #      define ATTR_MAYBE_UNUSED [[maybe_unused]]
 #    else
 #      define ATTR_MAYBE_UNUSED __pragma(warning(suppress : 4100 4101 4189))

@@ -6,6 +6,12 @@ if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clan
     set(CMAKE_VERBOSE_MAKEFILE ON)
     set(OPTIONS -Wall -Wextra -pedantic-errors -Werror)
     set(OPTIONS ${OPTIONS} -std=c++11)
+
+    if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") AND (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0.0))
+        set(OPTIONS ${OPTIONS} -Wimplicit-fallthrough)
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        set(OPTIONS ${OPTIONS} -Wimplicit-fallthrough)
+    endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     set(OPTIONS /W4 /WX)
     if(NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.11)

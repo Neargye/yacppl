@@ -87,19 +87,19 @@
 #if !defined(ATTR_FALLTHROUGH)
 #  if defined(__clang__)
 #    if (__clang_major__ * 10 + __clang_minor__) >= 39 && __cplusplus >= 201703L
-#      define ATTR_FALLTHROUGH [[fallthrough]]
+#      define ATTR_FALLTHROUGH [[fallthrough]];
 #    else
-#      define ATTR_FALLTHROUGH
+#      define ATTR_FALLTHROUGH [[clang::fallthrough]];
 #    endif
 #  elif defined(__GNUC__)
 #    if __GNUC__ >= 7 && __cplusplus >= 201703L
-#      define ATTR_FALLTHROUGH [[fallthrough]]
+#      define ATTR_FALLTHROUGH [[fallthrough]];
 #    else
-#      define ATTR_FALLTHROUGH
+#      define ATTR_FALLTHROUGH /*fallthrough*/
 #    endif
 #  elif defined(_MSC_VER)
 #    if _MSC_VER >= 1910 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
-#      define ATTR_FALLTHROUGH [[fallthrough]]
+#      define ATTR_FALLTHROUGH [[fallthrough]];
 #    else
 #      define ATTR_FALLTHROUGH
 #    endif

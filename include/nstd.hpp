@@ -4,7 +4,7 @@
 // | . ` |\___ \   | |  | |  | | | |  |_   _|_   _|
 // | |\  |____) |  | |  | |__| | | |____|_|   |_|
 // |_| \_|_____/   |_|  |_____/   \_____|
-// vesion 0.2.0
+// vesion 0.3.0
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // SPDX-License-Identifier: MIT
@@ -32,7 +32,7 @@
 
 #include <type_traits>
 
-namespace yal {
+namespace nstd {
 
 template <typename T>
 struct identity {
@@ -134,4 +134,4 @@ move_assign_if_noexcept(T& x) noexcept {
   return static_cast<typename std::remove_reference<T>::type&&>(x);
 }
 
-} // namespace yal
+} // namespace nstd

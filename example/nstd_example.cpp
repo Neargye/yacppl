@@ -60,60 +60,60 @@ struct D {
 using S = std::string;
 
 int main() {
-  static_assert(std::is_same<yal::remove_all_p<int**>::type, int>::value, "");
+  static_assert(std::is_same<nstd::remove_all_p<int**>::type, int>::value, "");
 
   int* const* volatile * p;
   UNUSED(p);
-  static_assert(std::is_same<yal::remove_all_p_t<decltype(p)>, int>::value, "");
+  static_assert(std::is_same<nstd::remove_all_p_t<decltype(p)>, int>::value, "");
 
   const auto& rp = &p;
   UNUSED(rp);
-  static_assert(std::is_same<yal::remove_all_cvrp<decltype(rp)>::type, int>::value, "");
+  static_assert(std::is_same<nstd::remove_all_cvrp<decltype(rp)>::type, int>::value, "");
 
   const auto& rp_ = &rp;
   UNUSED(rp_);
-  static_assert(std::is_same<yal::remove_all_cvrp_t<decltype(rp_)>, int>::value, "");
+  static_assert(std::is_same<nstd::remove_all_cvrp_t<decltype(rp_)>, int>::value, "");
 
   const volatile int* const* volatile**** i[10];
   UNUSED(i);
-  static_assert(std::is_same<yal::remove_all_cvrpe<decltype(i)>::type, int>::value, "");
+  static_assert(std::is_same<nstd::remove_all_cvrpe<decltype(i)>::type, int>::value, "");
 
   const auto& ri = &i;
   UNUSED(ri);
-  static_assert(std::is_same<yal::remove_all_cvrpe_t<decltype(ri)>, int>::value, "");
+  static_assert(std::is_same<nstd::remove_all_cvrpe_t<decltype(ri)>, int>::value, "");
 
-  static_assert(yal::is_same_signed<unsigned int, unsigned short>::value, "");
-  static_assert(!yal::is_same_signed<unsigned int, signed short>::value, "");
+  static_assert(nstd::is_same_signed<unsigned int, unsigned short>::value, "");
+  static_assert(!nstd::is_same_signed<unsigned int, signed short>::value, "");
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
-  static_assert(yal::is_same_signed_v<signed int, signed short>, "");
+  static_assert(nstd::is_same_signed_v<signed int, signed short>, "");
 #endif
 
-  static_assert(yal::is_template<std::string>::value, "");
-  static_assert(!yal::is_template<A>::value, "");
+  static_assert(nstd::is_template<std::string>::value, "");
+  static_assert(!nstd::is_template<A>::value, "");
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
-  static_assert(yal::is_template_v<S>, "");
+  static_assert(nstd::is_template_v<S>, "");
 #endif
 
-  static_assert(yal::template_nargs<A>::value == 0, "");
-  static_assert(yal::template_nargs<std::string>::value == 3, "");
+  static_assert(nstd::template_nargs<A>::value == 0, "");
+  static_assert(nstd::template_nargs<std::string>::value == 3, "");
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
-  static_assert(yal::template_nargs_v<S> == 3, "");
+  static_assert(nstd::template_nargs_v<S> == 3, "");
 #endif
   A a;
   UNUSED(a);
-  static_assert(std::is_same<decltype(yal::move_assign_if_noexcept(a)), A&&>::value, "");
+  static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(a)), A&&>::value, "");
 
   B b;
   UNUSED(b);
-  static_assert(std::is_same<decltype(yal::move_assign_if_noexcept(b)), const B&>::value, "");
+  static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(b)), const B&>::value, "");
 
   C c;
   UNUSED(c);
-  static_assert(std::is_same<decltype(yal::move_assign_if_noexcept(c)), C&&>::value, "");
+  static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(c)), C&&>::value, "");
 
   D d;
   UNUSED(d);
-  static_assert(std::is_same<decltype(yal::move_assign_if_noexcept(d)), const D&>::value, "");
+  static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(d)), const D&>::value, "");
 
   return 0;
 }

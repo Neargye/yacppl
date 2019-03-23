@@ -4,7 +4,7 @@
 // | |  | | '_ \| | | / __|/ _ \/ _` | | |  |_   _|_   _|
 // | |__| | | | | |_| \__ \  __/ (_| | | |____|_|   |_|
 //  \____/|_| |_|\__,_|___/\___|\__,_|  \_____|
-// vesion 0.2.0
+// vesion 0.3.0
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // SPDX-License-Identifier: MIT
@@ -36,18 +36,23 @@
 #  define UNUSED_CONSTEXPR inline
 #endif
 
-namespace yal {
+namespace unused {
 
 // Function with varying number of arguments to avoid "unused variable" warnings.
 template <typename... A>
-UNUSED_CONSTEXPR void unused(const A&...) noexcept {}
+#if defined(__cpp_constexpr) && __cpp_constexpr >= 201304L
+constexpr
+#else
+inline
+#endif
+void unused(const A&...) noexcept {}
 
-} // namespace yal
+} // namespace unused
 
 #if defined(_MSC_VER)
-// Macros with varying number of arguments to avoid "unused variable" warnings.
+// Macro with varying number of arguments to avoid "unused variable" warnings.
 #  define UNUSED(...) ((void)(__VA_ARGS__));
 #else
-// Macros with varying number of arguments to avoid "unused variable" warnings.
-#  define UNUSED(...) (decltype(::yal::unused(__VA_ARGS__))());
+// Macro with varying number of arguments to avoid "unused variable" warnings.
+#  define UNUSED(...) (decltype(::unused::unused(__VA_ARGS__))());
 #endif

@@ -115,5 +115,8 @@ int main() {
   UNUSED(d);
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(d)), const D&>::value, "");
 
+  static_assert(nstd::template_nargs<A>::value == 0, "");
+  static_assert(nstd::template_nargs<std::string>::value == 3, "");
+
   return 0;
 }

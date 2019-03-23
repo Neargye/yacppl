@@ -21,6 +21,12 @@ int a = 42, b = 0;
 UNUSED(a, b); // No warning: unused variable 'a'.
 ```
 
+### Integration
+
+You should add required file [unused.hpp](include/unused.hpp).
+
+----
+
 ## [Attributes](include/attributes.hpp) - Cross-compiler C++98/C++11/C++14/C++17/C++20 attributes
 
 ### [Examples](example/attributes_example.cpp)
@@ -46,6 +52,12 @@ ATTR_NODISCARD std::unique_ptr<int> foo() { return std::make_unique<int>(42); }
 ATTR_MAYBE_UNUSED int a = foo();
 ```
 
+### Integration
+
+You should add required file [attributes.hpp](include/attributes.hpp).
+
+----
+
 ## [NSTD](include/nstd.hpp) - STD like stuff
 
 ### [Examples](example/nstd_example.cpp)
@@ -70,6 +82,12 @@ nstd::is_same_signed_v<unsigned int, signed short> -> false
 // nstd::move_assign_if_noexcept - returns an rvalue reference to arg, unless copy assign is a better option than move assign to provide at least a strong exception guarantee.
 a = nstd::move_assign_if_noexcept(b);
 ```
+
+### Integration
+
+You should add required file [nstd.hpp](include/nstd.hpp).
+
+----
 
 ## Compiler compatibility
 

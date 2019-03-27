@@ -27,7 +27,7 @@ You should add required file [unused.hpp](include/unused.hpp).
 
 ----
 
-## [Attributes](include/attributes.hpp) - Cross-compiler C++98/C++11/C++14/C++17/C++20 attributes
+## [Attributes](include/attributes.hpp) - Attributes for C++98, C++11 and later
 
 ### [Examples](example/attributes_example.cpp)
 ```cpp

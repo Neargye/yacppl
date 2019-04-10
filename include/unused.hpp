@@ -4,7 +4,7 @@
 // | |  | | '_ \| | | / __|/ _ \/ _` | | |  |_   _|_   _|
 // | |__| | | | | |_| \__ \  __/ (_| | | |____|_|   |_|
 //  \____/|_| |_|\__,_|___/\___|\__,_|  \_____|
-// vesion 0.3.0
+// vesion 0.4.0
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // SPDX-License-Identifier: MIT
@@ -30,12 +30,6 @@
 
 #pragma once
 
-#if defined(__cpp_constexpr) && __cpp_constexpr >= 201304L
-#  define UNUSED_CONSTEXPR constexpr
-#else
-#  define UNUSED_CONSTEXPR inline
-#endif
-
 namespace unused {
 
 // Function with varying number of arguments to avoid "unused variable" warnings.
@@ -45,7 +39,7 @@ constexpr
 #else
 inline
 #endif
-void unused(const A&...) noexcept {}
+void unused_variable(const A&...) noexcept {}
 
 } // namespace unused
 
@@ -54,5 +48,5 @@ void unused(const A&...) noexcept {}
 #  define UNUSED(...) ((void)(__VA_ARGS__));
 #else
 // Macro with varying number of arguments to avoid "unused variable" warnings.
-#  define UNUSED(...) (decltype(::unused::unused(__VA_ARGS__))());
+#  define UNUSED(...) (decltype(::unused::unused_variable(__VA_ARGS__))());
 #endif

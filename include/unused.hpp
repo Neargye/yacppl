@@ -28,7 +28,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
+#ifndef NEARGYE_UNUSED_HPP
+#define NEARGYE_UNUSED_HPP
 
 namespace unused {
 
@@ -50,3 +51,5 @@ void unused_variable(const A&...) noexcept {}
 // Macro with varying number of arguments to avoid "unused variable" warnings.
 #  define UNUSED(...) (decltype(::unused::unused_variable(__VA_ARGS__))());
 #endif
+
+#endif // NEARGYE_UNUSED_HPP

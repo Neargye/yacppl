@@ -4,7 +4,7 @@
 // | . ` |\___ \   | |  | |  | | | |  |_   _|_   _|
 // | |\  |____) |  | |  | |__| | | |____|_|   |_|
 // |_| \_|_____/   |_|  |_____/   \_____|
-// vesion 0.3.0
+// vesion 0.3.1
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // SPDX-License-Identifier: MIT
@@ -28,7 +28,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma once
+#ifndef NEARGYE_NSTD_HPP
+#define NEARGYE_NSTD_HPP
 
 #include <type_traits>
 
@@ -115,7 +116,7 @@ constexpr typename template_nargs<T>::value_type template_nargs_v = template_nar
 // Checks if two types are the same signed/unsigned.
 template <typename T, typename U>
 struct is_same_signed
-    : std::integral_constant<bool, std::is_signed<T>::value == std::is_signed<U>::value ||
+    : std::integral_constant<bool, std::is_signed<T>::value == std::is_signed<U>::value &&
                                        std::is_unsigned<T>::value == std::is_unsigned<U>::value> {};
 
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
@@ -135,3 +136,5 @@ move_assign_if_noexcept(T& x) noexcept {
 }
 
 } // namespace nstd
+
+#endif // NEARGYE_NSTD_HPP

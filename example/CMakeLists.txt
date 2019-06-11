@@ -2,12 +2,9 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-set(OPTIONS "")
-
 if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
     set(CMAKE_VERBOSE_MAKEFILE ON)
-    set(OPTIONS -Wall -Wextra -pedantic-errors -Werror)
-    set(OPTIONS ${OPTIONS} -std=c++11)
+    set(OPTIONS -Wall -Wextra -pedantic-errors -Werror -std=c++11)
     check_cxx_compiler_flag(/-Wimplicit-fallthrough HAS_FALLTHROUGH_FLAG)
     if(HAS_FALLTHROUGH_FLAG)
         set(OPTIONS ${OPTIONS} -Wimplicit-fallthrough)

@@ -72,9 +72,9 @@ using is_detected = typename detail::detector<nonesuch, void, Op, Args...>::valu
 
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
 template <template <typename...> class Op, typename... Args>
-#if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
+#  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
 inline
-#endif
+#  endif
 constexpr bool is_detected_v = detail::detector<nonesuch, void, Op, Args...>::value_t::value;
 #endif
 

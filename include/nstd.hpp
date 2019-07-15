@@ -35,6 +35,49 @@
 
 namespace nstd {
 
+template <typename...>
+using void_t = void;
+
+namespace detail {
+
+template <typename Default, typename AlwaysVoid, template <typename...> class Op, typename... Args>
+struct detector {
+  using type = Default;
+  using value_t = std::false_type;
+};
+
+template <typename Default, template <typename...> class Op, typename... Args>
+struct detector<Default, void_t<Op<Args...>>, Op, Args...> {
+  using type = Op<Args...>;
+  using value_t = std::true_type;
+};
+
+} // namespace nstd::detail
+
+struct nonesuch final {
+  nonesuch() = delete;
+  nonesuch(const nonesuch&) = delete;
+  ~nonesuch() = delete;
+  void operator=(const nonesuch&) = delete;
+};
+
+template <typename Default, template<typename...> class Op, typename... Args>
+using detected_or = detail::detector<Default, void, Op, Args...>;
+
+template <template <typename...> class Op, typename... Args>
+using detected_t = typename detail::detector<nonesuch, void, Op, Args...>::type;
+
+template <template <typename...> class Op, typename... Args>
+using is_detected = typename detail::detector<nonesuch, void, Op, Args...>::value_t;
+
+#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
+template <template <typename...> class Op, typename... Args>
+#if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
+inline
+#endif
+constexpr bool is_detected_v = detail::detector<nonesuch, void, Op, Args...>::value_t::value;
+#endif
+
 template <typename T>
 struct identity {
   using type = T;

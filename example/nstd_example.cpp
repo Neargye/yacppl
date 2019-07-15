@@ -59,7 +59,17 @@ struct D {
 
 using S = std::string;
 
+template<typename T>
+using copy_assign_t = decltype(std::declval<T&>() = std::declval<const T&>());
+
 int main() {
+  static_assert(std::is_same<nstd::void_t<>, void>::value, "");
+  static_assert(nstd::is_detected<copy_assign_t, A>::value, "");
+  static_assert(!nstd::is_detected<copy_assign_t, C>::value, "");
+#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
+  static_assert(nstd::is_detected_v<copy_assign_t, B>, "");
+#endif
+
   static_assert(std::is_same<nstd::remove_all_p<int**>::type, int>::value, "");
 
   int* const* volatile * p;

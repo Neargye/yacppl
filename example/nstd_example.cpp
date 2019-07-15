@@ -63,11 +63,13 @@ template<typename T>
 using copy_assign_t = decltype(std::declval<T&>() = std::declval<const T&>());
 
 int main() {
+#if defined(__clang__) || (defined(__GNUC__) && __GNUC__ > 5) || (defined(_MSC_VER) && _MSC_VER >= 1910)
   static_assert(std::is_same<nstd::void_t<>, void>::value, "");
   static_assert(nstd::is_detected<copy_assign_t, A>::value, "");
   static_assert(!nstd::is_detected<copy_assign_t, C>::value, "");
-#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
+#  if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
   static_assert(nstd::is_detected_v<copy_assign_t, B>, "");
+#  endif
 #endif
 
   static_assert(std::is_same<nstd::remove_all_p<int**>::type, int>::value, "");

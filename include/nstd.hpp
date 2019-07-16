@@ -78,6 +78,28 @@ inline
 constexpr bool is_detected_v = detail::detector<nonesuch, void, Op, Args...>::value_t::value;
 #endif
 
+template <typename Expected, template<typename...> class Op, typename... Args>
+using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
+
+#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
+template <typename Expected, template<typename...> class Op, typename... Args>
+#  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
+inline
+#  endif
+constexpr bool is_detected_exact_v = is_detected_exact<Expected, Op, Args...>::value;
+#endif
+
+template <typename To, template<typename...> class Op, typename... Args>
+using is_detected_convertible = std::is_convertible<detected_t<Op, Args...>, To>;
+
+#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
+template <typename To, template<typename...> class Op, typename... Args>
+#  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
+inline
+#  endif
+constexpr bool is_detected_convertible_v = is_detected_convertible<To, Op, Args...>::value;
+#endif
+
 template <typename T>
 struct identity {
   using type = T;

@@ -4,7 +4,6 @@
 // | |  | | '_ \| | | / __|/ _ \/ _` | | |  |_   _|_   _|
 // | |__| | | | | |_| \__ \  __/ (_| | | |____|_|   |_|
 //  \____/|_| |_|\__,_|___/\___|\__,_|  \_____|
-// vesion 0.4.0
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // SPDX-License-Identifier: MIT
@@ -34,13 +33,13 @@
 namespace unused {
 
 // Function with varying number of arguments to avoid "unused variable" warnings.
-template <typename... A>
+template <typename... Args>
 #if defined(__cpp_constexpr) && __cpp_constexpr >= 201304L
 constexpr
 #else
 inline
 #endif
-void unused_variable(const A&...) noexcept {}
+void unused_variable(const Args&...) noexcept {}
 
 } // namespace unused
 

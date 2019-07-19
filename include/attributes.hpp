@@ -4,7 +4,6 @@
 //   / /\ \| __| __| '__| | '_ \| | | | __/ _ \/ __| | |  |_   _|_   _|
 //  / ____ \ |_| |_| |  | | |_) | |_| | ||  __/\__ \ | |____|_|   |_|
 // /_/    \_\__|\__|_|  |_|_.__/ \__,_|\__\___||___/  \_____|
-// vesion 0.1.3
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // SPDX-License-Identifier: MIT
@@ -54,30 +53,29 @@
 #endif
 
 // TODO: ATTR_CARRIES_DEPENDENCY
-// TODO: ATTR_DEPRECATED(reason)
 
 // ATTR_DEPRECATED indicates that the use of the name or entity declared with this attribute is allowed, but discouraged for some reason.
 #if !defined(ATTR_DEPRECATED)
 #  if defined(__clang__)
 #    if (__clang_major__ * 10 + __clang_minor__) >= 34 && __cplusplus >= 201402L
-#      define ATTR_DEPRECATED [[deprecated]]
+#      define ATTR_DEPRECATED(MSG) [[deprecated(MSG)]]
 #    else
-#      define ATTR_DEPRECATED __attribute__((__deprecated__))
+#      define ATTR_DEPRECATED(MSG) __attribute__((__deprecated__(MSG)))
 #    endif
 #  elif defined(__GNUC__)
 #    if (__GNUC__ * 10 +  __GNUC_MINOR__) >= 49 && __cplusplus >= 201402L
-#      define ATTR_DEPRECATED [[deprecated]]
+#      define ATTR_DEPRECATED(MSG) [[deprecated(MSG)]]
 #    else
-#      define ATTR_DEPRECATED __attribute__((__deprecated__))
+#      define ATTR_DEPRECATED(MSG) __attribute__((__deprecated__(MSG)))
 #    endif
 #  elif defined(_MSC_VER)
 #    if _MSC_VER >= 1900
-#      define ATTR_DEPRECATED [[deprecated]]
+#      define ATTR_DEPRECATED(MSG) [[deprecated(MSG)]]
 #    else
-#      define ATTR_DEPRECATED __declspec(deprecated)
+#      define ATTR_DEPRECATED(MSG) __declspec(deprecated(MSG))
 #    endif
 #  else
-#    define ATTR_DEPRECATED
+#    define ATTR_DEPRECATED(MSG)
 #  endif
 #endif
 
@@ -99,10 +97,10 @@
 #    if _MSC_VER >= 1910 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
 #      define ATTR_FALLTHROUGH [[fallthrough]];
 #    else
-#      define ATTR_FALLTHROUGH
+#      define ATTR_FALLTHROUGH /*fallthrough*/
 #    endif
 #  else
-#    define ATTR_FALLTHROUGH
+#    define ATTR_FALLTHROUGH /*fallthrough*/
 #  endif
 #endif
 
@@ -158,6 +156,22 @@
 #  endif
 #endif
 
-// TODO: ATTR_LIKELY
-// TODO: ATTR_UNLIKELY
+// ATTR_LIKELY indicates that the compiler should optimize for the case where a path of execution through a statement is more or less likely than any other path of execution.
+#if !defined(ATTR_LIKELY)
+#  if defined(__clang__) || defined(__GNUC__)
+#    define ATTR_LIKELY(x) __builtin_expect(!!(x), 1)
+#  else
+#    define ATTR_LIKELY(x) (!!(x))
+#  endif
+#endif
+
+// ATTR_UNLIKELY indicates that the compiler should optimize for the case where a path of execution through a statement is more or less likely than any other path of execution.
+#if !defined(ATTR_UNLIKELY)
+#  if defined(__clang__) || defined(__GNUC__)
+#    define ATTR_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#  else
+#    define ATTR_UNLIKELY(x) (!!(x))
+#  endif
+#endif
+
 // TODO: ATTR_NO_UNIQUE_ADDRESS

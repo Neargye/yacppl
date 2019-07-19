@@ -30,14 +30,12 @@ ATTR_MAYBE_UNUSED float foo1(ATTR_MAYBE_UNUSED int i) {  // No warning: unused p
 
 ATTR_NORETURN void foo2() { std::terminate(); }
 
-ATTR_DEPRECATED void foo3() {}
+ATTR_DEPRECATED("reason") void foo3() {}
 
-// TODO: ATTR_DEPRECATED("deprecated") void foo4() {}
-
-ATTR_NODISCARD int foo5() { return 42; }
+ATTR_NODISCARD int foo4() { return 42; }
 
 int main() {
-  ATTR_MAYBE_UNUSED int a = foo5();  // No warning: unused variable 'a'.
+  ATTR_MAYBE_UNUSED int a = foo4();  // No warning: unused variable 'a'.
 
   switch (a) {
     case 1:

@@ -94,10 +94,10 @@ int main() {
   UNUSED(ri);
   static_assert(std::is_same<nstd::remove_all_cvrpe_t<decltype(ri)>, int>::value, "");
 
-  static_assert(nstd::is_same_signed<unsigned int, unsigned short>::value, "");
-  static_assert(!nstd::is_same_signed<unsigned int, signed short>::value, "");
+  static_assert(nstd::is_same_signedness<unsigned int, unsigned short>::value, "");
+  static_assert(!nstd::is_same_signedness<unsigned int, signed short>::value, "");
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
-  static_assert(nstd::is_same_signed_v<signed int, signed short>, "");
+  static_assert(nstd::is_same_signedness_v<signed int, signed short>, "");
 #endif
 
   static_assert(nstd::is_template<std::string>::value, "");

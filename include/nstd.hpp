@@ -34,10 +34,12 @@
 
 namespace nstd {
 
-template <typename...>
-using void_t = void;
-
 namespace detail {
+
+template <typename... T>
+struct void_t {
+  using type = void;
+};
 
 template <typename Default, typename AlwaysVoid, template <typename...> class Op, typename... Args>
 struct detector {
@@ -46,12 +48,10 @@ struct detector {
 };
 
 template <typename Default, template <typename...> class Op, typename... Args>
-struct detector<Default, void_t<Op<Args...>>, Op, Args...> {
+struct detector<Default, typename void_t<Op<Args...>>::type, Op, Args...> {
   using type = Op<Args...>;
   using value_t = std::true_type;
 };
-
-} // namespace nstd::detail
 
 struct nonesuch final {
   nonesuch() = delete;
@@ -60,21 +60,26 @@ struct nonesuch final {
   void operator=(const nonesuch&) = delete;
 };
 
+} // namespace nstd::detail
+
+template <typename... T>
+using void_t = typename detail::void_t<T...>::type;
+
 template <typename Default, template<typename...> class Op, typename... Args>
 using detected_or = detail::detector<Default, void, Op, Args...>;
 
 template <template <typename...> class Op, typename... Args>
-using detected_t = typename detail::detector<nonesuch, void, Op, Args...>::type;
+using detected_t = typename detail::detector<detail::nonesuch, void, Op, Args...>::type;
 
 template <template <typename...> class Op, typename... Args>
-using is_detected = typename detail::detector<nonesuch, void, Op, Args...>::value_t;
+using is_detected = typename detail::detector<detail::nonesuch, void, Op, Args...>::value_t;
 
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
 template <template <typename...> class Op, typename... Args>
 #  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
 inline
 #  endif
-constexpr bool is_detected_v = detail::detector<nonesuch, void, Op, Args...>::value_t::value;
+constexpr bool is_detected_v = detail::detector<detail::nonesuch, void, Op, Args...>::value_t::value;
 #endif
 
 template <typename Expected, template<typename...> class Op, typename... Args>
@@ -179,7 +184,7 @@ constexpr typename template_nargs<T>::value_type template_nargs_v = template_nar
 
 // Checks if two types are the same signed/unsigned.
 template <typename T, typename U>
-struct is_same_signed
+struct is_same_signedness
     : std::integral_constant<bool, std::is_signed<T>::value == std::is_signed<U>::value &&
                                        std::is_unsigned<T>::value == std::is_unsigned<U>::value> {};
 
@@ -188,7 +193,7 @@ template <typename T, typename U>
 #  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
 inline
 #  endif
-constexpr bool is_same_signed_v = is_same_signed<T, U>::value;
+constexpr bool is_same_signedness_v = is_same_signedness<T, U>::value;
 #endif
 
 template <typename T>

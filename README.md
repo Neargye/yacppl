@@ -76,9 +76,9 @@ const volatile int* const* volatile**** i[10];
 nstd::remove_all_cvrpe<decltype(i)>::type -> int
 nstd::remove_all_cvrpe_t<decltype(i)> -> int
 
-// nstd::is_same_signed - checks if two types are the same signed/unsigned.
-nstd::is_same_signed<unsigned int, unsigned short>::value -> true
-nstd::is_same_signed_v<unsigned int, signed short> -> false
+// nstd::is_same_signedness - checks if two types are the same signed/unsigned.
+nstd::is_same_signedness<unsigned int, unsigned short>::value -> true
+nstd::is_same_signedness_v<unsigned int, signed short> -> false
 
 // nstd::move_assign_if_noexcept - returns an rvalue reference to arg, unless copy assign is a better option than move assign to provide at least a strong exception guarantee.
 a = nstd::move_assign_if_noexcept(b);

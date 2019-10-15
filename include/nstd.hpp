@@ -204,8 +204,8 @@ constexpr auto move_assign_if_noexcept(T& x) noexcept ->
 }
 
 template <typename T>
-constexpr auto move(T&& x) noexcept -> typename std::remove_reference<T>::type&& {
-  static_assert(!std::is_const<T>::value, "nstd::move requires a not const type.");
+constexpr auto move(T&& x) noexcept ->
+    typename std::enable_if<!std::is_const<T>::value, typename std::remove_reference<T>::type&&>::type {
   return static_cast<typename std::remove_reference<T>::type&&>(x);
 }
 

@@ -30,6 +30,7 @@
 #ifndef NEARGYE_NSTD_HPP
 #define NEARGYE_NSTD_HPP
 
+#include <cstring>
 #include <type_traits>
 
 namespace nstd {
@@ -207,6 +208,17 @@ template <typename T>
 constexpr auto move(T&& x) noexcept ->
     typename std::enable_if<!std::is_const<T>::value, typename std::remove_reference<T>::type&&>::type {
   return static_cast<typename std::remove_reference<T>::type&&>(x);
+}
+
+template <class To, class From>
+auto bit_cast(const From& src) noexcept ->
+    typename std::enable_if<(sizeof(To) == sizeof(From)) &&
+                                std::is_trivially_copyable<From>::value &&
+                                std::is_trivial<To>::value,
+                            To>::type {
+  To dst;
+  std::memcpy(&dst, &src, sizeof(To));
+  return dst;
 }
 
 } // namespace nstd

@@ -197,10 +197,15 @@ constexpr bool is_same_signedness_v = is_same_signedness<T, U>::value;
 #endif
 
 template <typename T>
-constexpr typename std::conditional<!std::is_nothrow_move_assignable<T>::value &&
-                                        std::is_copy_assignable<T>::value,
-                                    const T&, T&&>::type
-move_assign_if_noexcept(T& x) noexcept {
+constexpr auto move_assign_if_noexcept(T& x) noexcept ->
+    typename std::conditional<!std::is_nothrow_move_assignable<T>::value && std::is_copy_assignable<T>::value,
+                              const T&, T&&>::type {
+  return static_cast<typename std::remove_reference<T>::type&&>(x);
+}
+
+template <typename T>
+constexpr auto move(T&& x) noexcept -> typename std::remove_reference<T>::type&& {
+  static_assert(!std::is_const<T>::value, "nstd::move requires a not const type.");
   return static_cast<typename std::remove_reference<T>::type&&>(x);
 }
 

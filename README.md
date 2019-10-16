@@ -92,9 +92,9 @@ You should add required file [nstd.hpp](include/nstd.hpp).
 
 ## Compiler compatibility
 
-* Clang/LLVM >= 3.6
+* Clang/LLVM >= 5
 * Visual C++ >= 14 / Visual Studio >= 2015
-* Xcode >= 7
-* GCC >= 4.8
+* Xcode >= 8
+* GCC >= 5
 
 ## Licensed under the [MIT License](LICENSE)

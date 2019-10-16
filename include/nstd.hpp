@@ -151,38 +151,6 @@ struct remove_all_cvrpe
 template <typename T>
 using remove_all_cvrpe_t = typename remove_all_cvrpe<T>::type;
 
-template <typename>
-struct is_template
-    : std::false_type {};
-
-template <template <typename...> class T, typename... A>
-struct is_template<T<A...>>
-    : std::true_type {};
-
-#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
-template <typename T>
-#  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
-inline
-#  endif
-constexpr bool is_template_v = is_template<T>::value;
-#endif
-
-template <typename>
-struct template_nargs
-    : std::integral_constant<std::size_t, 0> {};
-
-template <template <typename...> class T, typename... A>
-struct template_nargs<T<A...>>
-    : std::integral_constant<std::size_t, sizeof...(A)> {};
-
-#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
-template <typename T>
-#  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
-inline
-#  endif
-constexpr typename template_nargs<T>::value_type template_nargs_v = template_nargs<T>::value;
-#endif
-
 // Checks if two types are the same signed/unsigned.
 template <typename T, typename U>
 struct is_same_signedness
@@ -210,7 +178,7 @@ constexpr auto move(T&& x) noexcept ->
   return static_cast<typename std::remove_reference<T>::type&&>(x);
 }
 
-template <class To, class From>
+template <typename To, typename From>
 auto bit_cast(const From& src) noexcept ->
     typename std::enable_if<(sizeof(To) == sizeof(From)) &&
                                 std::is_trivially_copyable<From>::value &&

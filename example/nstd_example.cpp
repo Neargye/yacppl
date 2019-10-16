@@ -100,17 +100,6 @@ int main() {
   static_assert(nstd::is_same_signedness_v<signed int, signed short>, "");
 #endif
 
-  static_assert(nstd::is_template<std::string>::value, "");
-  static_assert(!nstd::is_template<A>::value, "");
-#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
-  static_assert(nstd::is_template_v<S>, "");
-#endif
-
-  static_assert(nstd::template_nargs<A>::value == 0, "");
-  static_assert(nstd::template_nargs<std::string>::value == 3, "");
-#if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
-  static_assert(nstd::template_nargs_v<S> == 3, "");
-#endif
   A a;
   UNUSED(a);
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(a)), A&&>::value, "");

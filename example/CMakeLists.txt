@@ -1,7 +1,5 @@
 ﻿include(CheckCXXCompilerFlag)
 
-set(SOURCES unused_example attributes_example nstd_example)
-
 if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
     set(CMAKE_VERBOSE_MAKEFILE ON)
     set(OPTIONS -Wall -Wextra -pedantic-errors -Werror)

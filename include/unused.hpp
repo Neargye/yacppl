@@ -7,7 +7,7 @@
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 - 2019 Daniil Goncharov <neargye@gmail.com>.
+// Copyright (c) 2018 - 2020 Daniil Goncharov <neargye@gmail.com>.
 //
 // Permission is hereby  granted, free of charge, to any  person obtaining a copy
 // of this software and associated  documentation files (the "Software"), to deal
@@ -27,10 +27,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef NEARGYE_UNUSED_HPP
-#define NEARGYE_UNUSED_HPP
+#ifndef NEARGYE_NSTD_UNUSED_HPP
+#define NEARGYE_NSTD_UNUSED_HPP
 
-namespace unused {
+namespace nstd {
 
 // Function with varying number of arguments to avoid "unused variable" warnings.
 template <typename... Args>
@@ -39,16 +39,16 @@ constexpr
 #else
 inline
 #endif
-void unused_variable(const Args&...) noexcept {}
+void unused(const Args&...) noexcept {}
 
-} // namespace unused
+} // namespace nstd
 
 #if defined(_MSC_VER)
 // Macro with varying number of arguments to avoid "unused variable" warnings.
 #  define UNUSED(...) ((void)(__VA_ARGS__));
 #else
 // Macro with varying number of arguments to avoid "unused variable" warnings.
-#  define UNUSED(...) (decltype(::unused::unused_variable(__VA_ARGS__))());
+#  define UNUSED(...) (decltype(::nstd::unused(__VA_ARGS__))());
 #endif
 
-#endif // NEARGYE_UNUSED_HPP
+#endif // NEARGYE_NSTD_UNUSED_HPP

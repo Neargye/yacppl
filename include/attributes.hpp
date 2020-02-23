@@ -7,7 +7,7 @@
 //
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 - 2019 Daniil Goncharov <neargye@gmail.com>.
+// Copyright (c) 2018 - 2020 Daniil Goncharov <neargye@gmail.com>.
 //
 // Permission is hereby  granted, free of charge, to any  person obtaining a copy
 // of this software and associated  documentation files (the "Software"), to deal
@@ -53,6 +53,8 @@
 #endif
 
 // TODO: ATTR_CARRIES_DEPENDENCY
+
+// TODO: ATTR_DEPRECATED no msd
 
 // ATTR_DEPRECATED indicates that the use of the name or entity declared with this attribute is allowed, but discouraged for some reason.
 #if !defined(ATTR_DEPRECATED)
@@ -103,6 +105,8 @@
 #    define ATTR_FALLTHROUGH /*fallthrough*/
 #  endif
 #endif
+
+// TODO: ATTR_NODISCARD with msd
 
 // ATTR_NODISCARD encourages the compiler to issue a warning if the return value is discarded.
 #if !defined(ATTR_NODISCARD)
@@ -156,6 +160,7 @@
 #  endif
 #endif
 
+// TODO: [[likely]]
 // ATTR_LIKELY indicates that the compiler should optimize for the case where a path of execution through a statement is more or less likely than any other path of execution.
 #if !defined(ATTR_LIKELY)
 #  if defined(__clang__) || defined(__GNUC__)
@@ -165,6 +170,7 @@
 #  endif
 #endif
 
+// TODO: [[unlikely]]
 // ATTR_UNLIKELY indicates that the compiler should optimize for the case where a path of execution through a statement is more or less likely than any other path of execution.
 #if !defined(ATTR_UNLIKELY)
 #  if defined(__clang__) || defined(__GNUC__)

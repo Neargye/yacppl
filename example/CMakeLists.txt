@@ -1,10 +1,10 @@
 ﻿include(CheckCXXCompilerFlag)
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
+set(SOURCES unused_example attributes_example nstd_example)
 
 if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
     set(CMAKE_VERBOSE_MAKEFILE ON)
-    set(OPTIONS -Wall -Wextra -pedantic-errors -Werror -std=c++11)
+    set(OPTIONS -Wall -Wextra -pedantic-errors -Werror)
     check_cxx_compiler_flag(/-Wimplicit-fallthrough HAS_FALLTHROUGH_FLAG)
     if(HAS_FALLTHROUGH_FLAG)
         set(OPTIONS ${OPTIONS} -Wimplicit-fallthrough)
@@ -17,18 +17,20 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     endif()
 endif()
 
-add_executable(unused_example
-                    unused_example.cpp
-                    ${CMAKE_SOURCE_DIR}/include/unused.hpp)
-target_compile_options(unused_example PRIVATE ${OPTIONS})
+function(make_example target std)
+    add_executable(${target} ${target}.cpp)
+    set_target_properties(${target} PROPERTIES CXX_EXTENSIONS OFF)
+    target_compile_options(${target} PRIVATE ${OPTIONS})
+    target_link_libraries(${target} PRIVATE ${CMAKE_PROJECT_NAME})
+    if(std)
+        if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+            target_compile_options(${target} PRIVATE /std:${std})
+        else()
+            target_compile_options(${target} PRIVATE -std=${std})
+        endif()
+    endif()
+endfunction()
 
-add_executable(attributes_example
-                    attributes_example.cpp
-                    ${CMAKE_SOURCE_DIR}/include/attributes.hpp)
-target_compile_options(attributes_example PRIVATE ${OPTIONS})
-
-add_executable(nstd_example
-                    nstd_example.cpp
-                    ${CMAKE_SOURCE_DIR}/include/nstd.hpp
-                    ${CMAKE_SOURCE_DIR}/include/unused.hpp)
-target_compile_options(nstd_example PRIVATE ${OPTIONS})
+make_example(attributes_example c++11)
+make_example(unused_example c++11)
+make_example(nstd_example c++17)

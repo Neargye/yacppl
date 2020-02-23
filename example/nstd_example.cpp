@@ -1,6 +1,6 @@
 // Licensed under the MIT License <http://opensource.org/licenses/MIT>.
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 - 2019 Daniil Goncharov <neargye@gmail.com>.
+// Copyright (c) 2018 - 2020 Daniil Goncharov <neargye@gmail.com>.
 //
 // Permission is hereby  granted, free of charge, to any  person obtaining a copy
 // of this software and associated  documentation files (the "Software"), to deal
@@ -20,9 +20,13 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <nstd.hpp>
-
+#include <attributes.hpp>
+#include <byte.hpp>
+#include <concepts.hpp>
+#include <type_traits.hpp>
 #include <unused.hpp>
+#include <utility.hpp>
+
 #include <type_traits>
 #include <string>
 
@@ -59,7 +63,7 @@ struct D {
 
 using S = std::string;
 
-template<typename T>
+template <typename T>
 using copy_assign_t = decltype(std::declval<T&>() = std::declval<const T&>());
 
 int main() {
@@ -72,27 +76,27 @@ int main() {
 #  endif
 #endif
 
-  static_assert(std::is_same<nstd::remove_all_p<int**>::type, int>::value, "");
+  static_assert(std::is_same<nstd::remove_all_ptr<int**>::type, int>::value, "");
 
   int* const* volatile * p;
   UNUSED(p);
-  static_assert(std::is_same<nstd::remove_all_p_t<decltype(p)>, int>::value, "");
+  static_assert(std::is_same<nstd::remove_all_ptr_t<decltype(p)>, int>::value, "");
 
   const auto& rp = &p;
   UNUSED(rp);
-  static_assert(std::is_same<nstd::remove_all_cvrp<decltype(rp)>::type, int>::value, "");
+  static_assert(std::is_same<nstd::remove_all_cv_ref_ptr<decltype(rp)>::type, int>::value, "");
 
   const auto& rp_ = &rp;
   UNUSED(rp_);
-  static_assert(std::is_same<nstd::remove_all_cvrp_t<decltype(rp_)>, int>::value, "");
+  static_assert(std::is_same<nstd::remove_all_cv_ref_ptr_t<decltype(rp_)>, int>::value, "");
 
   const volatile int* const* volatile**** i[10];
   UNUSED(i);
-  static_assert(std::is_same<nstd::remove_all_cvrpe<decltype(i)>::type, int>::value, "");
+  static_assert(std::is_same<nstd::remove_all_cv_ref_ptr_ext<decltype(i)>::type, int>::value, "");
 
   const auto& ri = &i;
   UNUSED(ri);
-  static_assert(std::is_same<nstd::remove_all_cvrpe_t<decltype(ri)>, int>::value, "");
+  static_assert(std::is_same<nstd::remove_all_cv_ref_ptr_ext_t<decltype(ri)>, int>::value, "");
 
   static_assert(nstd::is_same_signedness<unsigned int, unsigned short>::value, "");
   static_assert(!nstd::is_same_signedness<unsigned int, signed short>::value, "");

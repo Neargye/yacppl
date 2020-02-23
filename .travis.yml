@@ -128,12 +128,6 @@ matrix:
 
     - os: osx
       compiler: clang++
-      osx_image: xcode8.3
-      env:
-        - CXX_COMPILER=clang++ CC_COMPILER=clang
-
-    - os: osx
-      compiler: clang++
       osx_image: xcode9.4
       env:
         - CXX_COMPILER=clang++ CC_COMPILER=clang
@@ -146,7 +140,7 @@ matrix:
 
     - os: osx
       compiler: clang++
-      osx_image: xcode11.2
+      osx_image: xcode11.3
       env:
         - CXX_COMPILER=clang++ CC_COMPILER=clang
 
@@ -159,10 +153,15 @@ before_script:
   - rm -rf build
   - mkdir -p build
   - cd build
-  - cmake -G "Unix Makefiles" ..
 
 script:
-  - cmake --build . -- -j${JOBS}
+  - cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug ..
+  - cmake --build . --config Debug -- -j${JOBS}
+  - ctest --output-on-failure -C Debug -j${JOBS}
+  - rm -rf ./*
+  - cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+  - cmake --build . --config Release -- -j${JOBS}
+  - ctest --output-on-failure -C Release -j${JOBS}
 
 notifications:
   email: false

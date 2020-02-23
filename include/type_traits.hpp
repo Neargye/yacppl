@@ -32,12 +32,6 @@
 
 #include <type_traits>
 
-#if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
-#  define __NSTD_INLINE_VAR inline
-#else
-#  define __NSTD_INLINE_VAR
-#endif
-
 namespace nstd {
 
 namespace detail {
@@ -82,7 +76,10 @@ using is_detected = typename detail::detector<detail::nonesuch, void, Op, Args..
 
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
 template <template <typename...> class Op, typename... Args>
-__NSTD_INLINE_VAR constexpr bool is_detected_v = detail::detector<detail::nonesuch, void, Op, Args...>::value_t::value;
+#  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
+inline
+#  endif
+constexpr bool is_detected_v = detail::detector<detail::nonesuch, void, Op, Args...>::value_t::value;
 #endif
 
 template <template <typename...> class Op, typename... Args>
@@ -93,7 +90,10 @@ using is_detected_exact = std::is_same<Expected, detected_t<Op, Args...>>;
 
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
 template <typename Expected, template <typename...> class Op, typename... Args>
-__NSTD_INLINE_VAR constexpr bool is_detected_exact_v = is_detected_exact<Expected, Op, Args...>::value;
+#  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
+inline
+#  endif
+constexpr bool is_detected_exact_v = is_detected_exact<Expected, Op, Args...>::value;
 #endif
 
 template <typename To, template <typename...> class Op, typename... Args>
@@ -101,7 +101,10 @@ using is_detected_convertible = std::is_convertible<detected_t<Op, Args...>, To>
 
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
 template <typename To, template <typename...> class Op, typename... Args>
-__NSTD_INLINE_VAR constexpr bool is_detected_convertible_v = is_detected_convertible<To, Op, Args...>::value;
+#  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
+inline
+#  endif
+constexpr bool is_detected_convertible_v = is_detected_convertible<To, Op, Args...>::value;
 #endif
 
 template <typename T>
@@ -169,22 +172,26 @@ struct is_same_signedness : std::integral_constant<bool, std::is_signed<T>::valu
 
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
 template <typename T, typename U>
-__NSTD_INLINE_VAR constexpr bool is_same_signedness_v = is_same_signedness<T, U>::value;
+#  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
+inline
+#  endif
+constexpr bool is_same_signedness_v = is_same_signedness<T, U>::value;
 #endif
 
 #if defined(__cpp_lib_is_nothrow_convertible) && __cpp_lib_is_nothrow_convertible >= 201806L
 template <typename From, typename To>
-struct is_nothrow_convertible
-    : std::is_nothrow_convertible<From, To> {};
+struct is_nothrow_convertible : std::is_nothrow_convertible<From, To> {};
 
 #  if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
 template <typename From, typename To>
-__NSTD_INLINE_VAR constexpr bool is_nothrow_convertible_v = std::is_nothrow_convertible<From, To>::value;
+#    if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
+inline
+#    endif
+constexpr bool is_nothrow_convertible_v = std::is_nothrow_convertible<From, To>::value;
 #  endif
 #else
-//TODO: https://reviews.llvm.org/D58019
 namespace detail {
-
+// https://reviews.llvm.org/D58019
 template <typename From, typename To,
           bool = std::integral_constant<bool, std::is_void<From>::value ||
                                               std::is_function<To>::value ||
@@ -217,7 +224,10 @@ struct is_nothrow_convertible
 
 #  if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
 template <typename From, typename To>
-__NSTD_INLINE_VAR constexpr bool is_nothrow_convertible_v = is_nothrow_convertible<From, To>::value;
+#    if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
+inline
+#    endif
+constexpr bool is_nothrow_convertible_v = is_nothrow_convertible<From, To>::value;
 #  endif
 #endif
 

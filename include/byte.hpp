@@ -97,15 +97,15 @@ template <typename I>
 
 template <typename T>
 auto to_bytes(byte* dst, const T& src) -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
-  static_assert(std::is_trivially_copyable<byte>, "nstd::from_bytes requires byte is trivially copyable.");
-  static_assert(std::is_trivially_copyable<T>,    "nstd::to_bytes requires T is trivially copyable.");
+  static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
+  static_assert(std::is_trivially_copyable_v<T>,    "nstd::to_bytes requires T is trivially copyable.");
   static_cast<void>(std::memcpy(dst, &src, sizeof(T)));
 }
 
 template <typename T>
 auto to_bytes(byte* dst, const T* src, std::size_t count) -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
-  static_assert(std::is_trivially_copyable<byte>, "nstd::from_bytes requires byte is trivially copyable.");
-  static_assert(std::is_trivially_copyable<T>,    "nstd::to_bytes requires T is trivially copyable.");
+  static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
+  static_assert(std::is_trivially_copyable_v<T>,    "nstd::to_bytes requires T is trivially copyable.");
   static_cast<void>(std::memcpy(dst, src, count));
 }
 

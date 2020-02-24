@@ -42,35 +42,35 @@ template <typename I>
   return static_cast<byte>(value);
 }
 
-template <typename I = std::underlying_type_t<byte>>
+template <typename I = unsigned char>
 [[nodiscard]] constexpr auto to_integer(byte b) noexcept -> std::enable_if_t<std::is_integral_v<I>, I> {
   return static_cast<I>(b);
 }
 
 [[nodiscard]] constexpr byte operator~(byte b) noexcept {
-  return static_cast<byte>(~to_integer(b));
+  return static_cast<byte>(static_cast<unsigned char>(~static_cast<unsigned int>(b)));
 }
 
 [[nodiscard]] constexpr byte operator|(byte lhs, byte rhs) noexcept {
-  return static_cast<byte>(to_integer(lhs) | to_integer(rhs));
+  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(lhs) | static_cast<unsigned int>(rhs)));
 }
 
 [[nodiscard]] constexpr byte operator&(byte lhs, byte rhs) noexcept {
-  return static_cast<byte>(to_integer(lhs) & to_integer(rhs));
+  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(lhs) & static_cast<unsigned int>(rhs)));
 }
 
 [[nodiscard]] constexpr byte operator^(byte lhs, byte rhs) noexcept {
-  return static_cast<byte>(to_integer(lhs) ^ to_integer(rhs));
+  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(lhs) ^ static_cast<unsigned int>(rhs)));
 }
 
 template <typename I>
 [[nodiscard]] constexpr auto operator<<(byte& b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte> {
-  return static_cast<byte>(to_integer<I>(b) << shift);
+  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(b) << shift));
 }
 
 template <typename I>
 [[nodiscard]] constexpr auto operator>>(byte& b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte> {
-  return static_cast<byte>(to_integer<I>(b) >> shift);
+  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(b) >> shift));
 }
 
 [[nodiscard]] constexpr byte& operator|=(byte& lhs, byte rhs) noexcept {

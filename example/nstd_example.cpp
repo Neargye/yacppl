@@ -79,23 +79,23 @@ int main() {
   static_assert(std::is_same<nstd::remove_all_ptr<int**>::type, int>::value, "");
 
   int* const* volatile * p;
-  UNUSED(p);
+  NSTD_UNUSED(p);
   static_assert(std::is_same<nstd::remove_all_ptr_t<decltype(p)>, int>::value, "");
 
   const auto& rp = &p;
-  UNUSED(rp);
+  NSTD_UNUSED(rp);
   static_assert(std::is_same<nstd::remove_all_cv_ref_ptr<decltype(rp)>::type, int>::value, "");
 
   const auto& rp_ = &rp;
-  UNUSED(rp_);
+  NSTD_UNUSED(rp_);
   static_assert(std::is_same<nstd::remove_all_cv_ref_ptr_t<decltype(rp_)>, int>::value, "");
 
   const volatile int* const* volatile**** i[10];
-  UNUSED(i);
+  NSTD_UNUSED(i);
   static_assert(std::is_same<nstd::remove_all_cv_ref_ptr_ext<decltype(i)>::type, int>::value, "");
 
   const auto& ri = &i;
-  UNUSED(ri);
+  NSTD_UNUSED(ri);
   static_assert(std::is_same<nstd::remove_all_cv_ref_ptr_ext_t<decltype(ri)>, int>::value, "");
 
   static_assert(nstd::is_same_signedness<unsigned int, unsigned short>::value, "");
@@ -105,19 +105,19 @@ int main() {
 #endif
 
   A a;
-  UNUSED(a);
+  NSTD_UNUSED(a);
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(a)), A&&>::value, "");
 
   B b;
-  UNUSED(b);
+  NSTD_UNUSED(b);
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(b)), const B&>::value, "");
 
   C c;
-  UNUSED(c);
+  NSTD_UNUSED(c);
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(c)), C&&>::value, "");
 
   D d;
-  UNUSED(d);
+  NSTD_UNUSED(d);
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(d)), const D&>::value, "");
 
   return 0;

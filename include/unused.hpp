@@ -45,10 +45,10 @@ void unused(const Args&...) noexcept {}
 
 #if defined(_MSC_VER)
 // Macro with varying number of arguments to avoid "unused variable" warnings.
-#  define UNUSED(...) ((void)(__VA_ARGS__));
+#  define NSTD_UNUSED(...) ((void)(__VA_ARGS__))
 #else
 // Macro with varying number of arguments to avoid "unused variable" warnings.
-#  define UNUSED(...) (decltype(::nstd::unused(__VA_ARGS__))());
+#  define NSTD_UNUSED(...) (decltype(::nstd::unused(__VA_ARGS__))())
 #endif
 
 #endif // NEARGYE_NSTD_UNUSED_HPP

@@ -23,17 +23,17 @@
 #include <unused.hpp>
 
 void foo_unused(int i) {
-  UNUSED(i); // No warning: unused parameter 'i'.
+  NSTD_UNUSED(i); // No warning: NSTD_UNUSED parameter 'i'.
 }
 
 int main() {
   int a = 0;
   float b = 0.0f;
   char c[] = "test";
-  UNUSED(a, b, c); // No warning: unused variable 'a', 'b', 'c'.
+  NSTD_UNUSED(a, b, c); // No warning: NSTD_UNUSED variable 'a', 'b', 'c'.
 
   int d = 0;
-  UNUSED(d); // No warning: unused variable 'd'.
+  NSTD_UNUSED(d); // No warning: NSTD_UNUSED variable 'd'.
 
   return 0;
 }

@@ -106,7 +106,7 @@ template <typename T>
 auto to_bytes(byte* dst, const T* src, std::size_t count) -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
   static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
   static_assert(std::is_trivially_copyable_v<T>,    "nstd::to_bytes requires T is trivially copyable.");
-  static_cast<void>(std::memcpy(dst, src, count));
+  static_cast<void>(std::memcpy(dst, src, count * sizeof(byte)));
 }
 
 template <typename T>
@@ -122,7 +122,7 @@ template <typename T>
 [[nodiscard]] auto from_bytes(T* dst, const byte* src, std::size_t count) -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
   static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
   static_assert(std::is_trivially_copyable_v<T>,    "nstd::from_bytes requires T is trivially copyable.");
-  static_cast<void>(std::memcpy(dst, src, count));
+  static_cast<void>(std::memcpy(dst, src, count * sizeof(byte)));
 }
 
 } // namespace nstd

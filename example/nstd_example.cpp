@@ -29,6 +29,7 @@
 
 #include <type_traits>
 #include <string>
+#include <iostream>
 
 struct A {};
 
@@ -119,6 +120,12 @@ int main() {
   D d;
   NSTD_UNUSED(d);
   static_assert(std::is_same<decltype(nstd::move_assign_if_noexcept(d)), const D&>::value, "");
+
+  nstd::invoke_each([](const auto& x) { std::cout << x << " "; }, "invoke_each test", 1, 2, 3);
+  std::cout << std::endl;
+
+  nstd::apply_each([](const auto& x) { std::cout << x << " "; }, std::tuple{"apply_each test", 1, 2, 3});
+  std::cout << std::endl;
 
   return 0;
 }

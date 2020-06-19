@@ -31,10 +31,30 @@
 #define NEARGYE_NSTD_UTILITY_HPP
 
 #include <cstring>
+#include <functional>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 
 namespace nstd {
+
+namespace detail {
+
+template <typename F, typename... Args>
+using enable_if_invocable_each_t = std::enable_if_t<std::bool_constant<(std::is_invocable_v<F, Args> && ...)>::value>;
+
+template <typename F, typename... Args>
+struct is_nothrow_invocable_each : std::bool_constant<(std::is_nothrow_invocable_v<F, Args> && ...)> {};
+
+template <typename F, typename... Args>
+inline constexpr bool is_nothrow_invocable_each_v = is_nothrow_invocable_each<F, Args...>::value;
+
+template <typename F, typename Tuple, std::size_t... I>
+void apply_each_impl(F&& f, Tuple&& t, std::index_sequence<I...>) noexcept(std::bool_constant<(std::is_nothrow_invocable_v<F, std::tuple_element_t<I, Tuple>> && ...)>::value) {
+  (static_cast<void>(std::invoke(std::forward<F>(f), std::get<I>(std::forward<Tuple>(t)))), ...);
+}
+
+} // namespace nstd::detail
 
 template <typename T>
 [[nodiscard]] constexpr auto move(T&& x) noexcept -> std::remove_reference_t<T>&& {
@@ -92,6 +112,19 @@ template <typename To, typename From>
   To dst;
   static_cast<void>(std::memcpy(&dst, &src, sizeof(To)));
   return dst;
+}
+
+template <typename F, typename... Args>
+constexpr auto invoke_each(F&& f, Args&&...args) noexcept(detail::is_nothrow_invocable_each_v<F, Args...>) -> detail::enable_if_invocable_each_t<F, Args...> {
+  (static_cast<void>(std::invoke(std::forward<F>(f), std::forward<Args>(args))), ...);
+}
+
+template <typename F, typename... Args>
+constexpr auto apply_each(F&& f, std::tuple<Args...>&& t) noexcept(detail::is_nothrow_invocable_each_v<F, Args...>) -> detail::enable_if_invocable_each_t<F, Args...> {
+  using Tuple = decltype(t);
+  detail::apply_each_impl(std::forward<F>(f),
+                          std::forward<Tuple>(t),
+                          std::make_index_sequence<std::tuple_size_v<std::remove_reference_t<Tuple>>>{});
 }
 
 } // namespace nstd

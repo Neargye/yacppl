@@ -90,7 +90,7 @@ template <typename To, typename From>
   static_assert(std::is_trivially_copyable_v<From>, "nstd::bit_cast requires From is trivially copyable.");
   static_assert(std::is_trivial_v<To>,              "nstd::bit_cast requires To is trivial.");
   To dst;
-  std::memcpy(&dst, &src, sizeof(To));
+  static_cast<void>(std::memcpy(&dst, &src, sizeof(To)));
   return dst;
 }
 

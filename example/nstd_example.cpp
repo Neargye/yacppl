@@ -124,7 +124,7 @@ int main() {
   nstd::invoke_each([](const auto& x) { std::cout << x << " "; }, "invoke_each test", 1, 2, 3);
   std::cout << std::endl;
 
-  nstd::apply_each([](const auto& x) { std::cout << x << " "; }, std::tuple{"apply_each test", 1, 2, 3});
+  nstd::apply_each([](const auto& x) { std::cout << x << " "; }, std::make_tuple("apply_each test", 1, 2, 3));
   std::cout << std::endl;
 
   return 0;

@@ -1,10 +1,8 @@
 os: linux # Use linux unless specified otherwise.
 dist: bionic
-sudo: required
-
 language: cpp
 
-matrix:
+jobs:
   include:
     - os: linux
       compiler: g++
@@ -38,6 +36,17 @@ matrix:
             - g++-9
       env:
         - CXX_COMPILER=g++-9 CC_COMPILER=gcc-9
+
+    - os: linux
+      compiler: g++
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-10
+      env:
+        - CXX_COMPILER=g++-10 CC_COMPILER=gcc-10
 
     - os: linux
       compiler: clang++
@@ -101,7 +110,7 @@ matrix:
 
     - os: osx
       compiler: clang++
-      osx_image: xcode12
+      osx_image: xcode12.2
       env:
         - CXX_COMPILER=clang++ CC_COMPILER=clang
 
@@ -116,13 +125,11 @@ before_script:
   - cd build
 
 script:
-  - cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug ..
+  - cmake -DCMAKE_BUILD_TYPE=Debug ..
   - cmake --build . --config Debug -- -j${JOBS}
-  - ctest --output-on-failure -C Debug -j${JOBS}
   - rm -rf ./*
-  - cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+  - cmake -DCMAKE_BUILD_TYPE=Release ..
   - cmake --build . --config Release -- -j${JOBS}
-  - ctest --output-on-failure -C Release -j${JOBS}
 
 notifications:
   email: false

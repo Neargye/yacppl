@@ -45,7 +45,7 @@ template <typename T, bool C>
 using TypeConcept = detail::type_concept<T, typename std::enable_if<C>::type>;
 
 template <typename T>
-using RValue = TypeConcept<T, std::is_rvalue_reference<T>::value && !std::is_const<typename std::remove_reference<T>::type>::value>&&;
+using RValue = TypeConcept<T, std::is_rvalue_reference<T&&>::value && !std::is_const<typename std::remove_reference<T>::type>::value>&&;
 
 template <typename T>
 using Const = TypeConcept<T, std::is_const<typename std::remove_reference<T>::type>::value>;

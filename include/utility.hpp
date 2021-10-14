@@ -50,7 +50,7 @@ template <typename F, typename... Args>
 inline constexpr bool is_nothrow_invocable_each_v = is_nothrow_invocable_each<F, Args...>::value;
 
 template <typename F, typename Tuple, std::size_t... I>
-void apply_each_impl(F&& f, Tuple&& t, std::index_sequence<I...>) noexcept(std::bool_constant<(std::is_nothrow_invocable_v<F, std::tuple_element_t<I, Tuple>> && ...)>::value) {
+constexpr void apply_each_impl(F&& f, Tuple&& t, std::index_sequence<I...>) noexcept(std::bool_constant<(std::is_nothrow_invocable_v<F, std::tuple_element_t<I, Tuple>> && ...)>::value) {
   (static_cast<void>(std::invoke(std::forward<F>(f), std::get<I>(std::forward<Tuple>(t)))), ...);
 }
 
@@ -125,6 +125,16 @@ constexpr auto apply_each(F&& f, std::tuple<Args...>&& t) noexcept(detail::is_no
   detail::apply_each_impl(std::forward<F>(f),
                           std::forward<Tuple>(t),
                           std::make_index_sequence<std::tuple_size_v<std::remove_reference_t<Tuple>>>{});
+}
+
+// https://artificial-mind.net/blog/2020/10/31/constexpr-for
+template <auto Start, auto End, auto Inc, typename F>
+constexpr void constexpr_for(F&& f) {
+  if constexpr (Start < End) {
+    //static_cast<void>(std::invoke(std::forward<F>(f), std::integral_constant<decltype(Start), Start>()));
+    static_cast<void>(std::forward<F>(f)(std::integral_constant<decltype(Start), Start>()));
+    constexpr_for<Start + Inc, End, Inc>(std::forward<F>(f));
+  }
 }
 
 } // namespace nstd

@@ -6,7 +6,7 @@
 
 * [UNUSED](include/unused.hpp) - Macro with varying number of arguments to avoid "unused variable" warnings, with no effect on binary size, for C++11 and later.
 
-* [concepts](include/concepts.hpp) - implementations concepts, for C++11 and later.
+* [concepts](include/concepts.hpp) - implementations concepts-like, for C++11 and later.
 
 * [type_traits](include/type_traits.hpp) - implementations of some type traits, for C++11 and later.
 

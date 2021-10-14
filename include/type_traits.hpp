@@ -41,6 +41,7 @@ struct void_t {
   using type = void;
 };
 
+// https://en.cppreference.com/w/cpp/experimental/is_detected
 template <typename Default, typename AlwaysVoid, template <typename...> class Op, typename... Args>
 struct detector {
   using type = Default;
@@ -191,6 +192,7 @@ constexpr bool is_nothrow_convertible_v = std::is_nothrow_convertible<From, To>:
 #  endif
 #else
 namespace detail {
+
 // https://reviews.llvm.org/D58019
 template <typename From, typename To,
           bool = std::integral_constant<bool, std::is_void<From>::value ||

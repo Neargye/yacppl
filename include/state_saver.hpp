@@ -30,25 +30,38 @@
 #ifndef NEARGYE_STATE_SAVER_HPP
 #define NEARGYE_STATE_SAVER_HPP
 
-#define STATE_SAVER_VERSION_MAJOR 0
-#define STATE_SAVER_VERSION_MINOR 9
-#define STATE_SAVER_VERSION_PATCH 1
+// Sometimes a certain value has to change only for a limited scope.
+// This class wrapper saves a copy of the current state of some object,
+// and resets the object’s state at destruction time, undoing any change the object may have gone through.
+// * saver_exit - saves the original variable value and restores on scope exit.
+// * saver_fail - saves the original variable value and restores on scope exit when an exception has been thrown.
+// * saver_success - saves the original variable value and restores on scope exit when no exceptions have been thrown.
 
-#include <type_traits>
-#if (defined(_MSC_VER) && _MSC_VER >= 1900) || ((defined(__clang__) || defined(__GNUC__)) && __cplusplus >= 201700L)
-#include <exception>
-#endif
+// Interface of state_saver:
+// * constructor state_saver(T& object) - construct state_saver with saved object.
+// * dismiss() - dismiss restore on scope exit.
+// * restore() - resets the object’s state. Requirements copy operator =.
 
-// state_saver throwable settings:
+// Requirements to saved object:
+// * Object semantic (cannot be reference, function, ...).
+// * Copy constructor.
+// * operator= (no-throw one preferred).
+
+// Throwable settings:
 // STATE_SAVER_NO_THROW_CONSTRUCTIBLE requires nothrow constructible action.
 // STATE_SAVER_MAY_THROW_RESTORE restore may throw exceptions.
 // STATE_SAVER_NO_THROW_RESTORE requires noexcept restore.
 // STATE_SAVER_SUPPRESS_THROW_RESTORE exceptions during restore will be suppressed.
 // STATE_SAVER_CATCH_HANDLER exceptions handler. If STATE_SAVER_SUPPRESS_THROW_RESTORE is not defined, it will do nothing.
 
-// state_saver assignable settings:
+// Assignable settings:
 // STATE_SAVER_FORCE_MOVE_ASSIGNABLE restore on scope exit will be move assigned.
 // STATE_SAVER_FORCE_COPY_ASSIGNABLE restore on scope exit will be copy assigned.
+
+#include <type_traits>
+#if (defined(_MSC_VER) && _MSC_VER >= 1900) || ((defined(__clang__) || defined(__GNUC__)) && __cplusplus >= 201700L)
+#include <exception>
+#endif
 
 #if !defined(STATE_SAVER_MAY_THROW_RESTORE) && !defined(STATE_SAVER_NO_THROW_RESTORE) && !defined(STATE_SAVER_SUPPRESS_THROW_RESTORE)
 #  define STATE_SAVER_MAY_THROW_RESTORE

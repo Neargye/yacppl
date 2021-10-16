@@ -9,7 +9,7 @@ else()
 endif()
 
 option(YACPPL_OPT_BUILD_EXAMPLES "Build yaccpl examples" ${IS_TOPLEVEL_PROJECT})
-option(YACPPL_OPT_BUILD_TESTS "Build and perform yaccpl tests" OFF)
+option(YACPPL_OPT_BUILD_TESTS "Build and perform yaccpl tests" ${IS_TOPLEVEL_PROJECT})
 
 if(YACPPL_OPT_BUILD_EXAMPLES)
     add_subdirectory(example)

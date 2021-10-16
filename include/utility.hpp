@@ -132,7 +132,7 @@ template <auto Start, auto End, auto Inc, typename F>
 constexpr void constexpr_for(F&& f) {
   if constexpr (Start < End) {
     //static_cast<void>(std::invoke(std::forward<F>(f), std::integral_constant<decltype(Start), Start>()));
-    static_cast<void>(std::forward<F>(f)(std::integral_constant<decltype(Start), Start>()));
+    static_cast<void>(std::forward<F>(f)(std::integral_constant<decltype(Start), Start>{}));
     constexpr_for<Start + Inc, End, Inc>(std::forward<F>(f));
   }
 }

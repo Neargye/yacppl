@@ -181,3 +181,5 @@
 #endif
 
 // TODO: ATTR_NO_UNIQUE_ADDRESS
+// https://devblogs.microsoft.com/cppblog/msvc-cpp20-and-the-std-cpp20-switch/#msvc-extensions-and-abi
+// https://github.com/microsoft/STL/issues/1364

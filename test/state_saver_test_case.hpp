@@ -35,12 +35,17 @@ using namespace nstd;
 #  define CASE_TEST_STR(x) CASE_TEST_STR_(x)
 #endif
 
+#if !defined(CASE_TEST_CONCAT)
+#  define CASE_TEST_CONCAT_(s1, s2) s1##s2
+#  define CASE_TEST_CONCAT(s1, s2) CASE_TEST_CONCAT_(s1, s2)
+#endif
+
 #if !defined(CASE_TEST)
 #  define CASE_TEST(name) TEST_CASE(name " " CASE_TEST_STR(CASE_NUMBER))
 #endif
 
 #if !defined(test_class)
-#  define test_class NEARGYE_STR_CONCAT(TEST_CLASS_NAME, CASE_NUMBER)
+#  define test_class CASE_TEST_CONCAT(TEST_CLASS_NAME, CASE_NUMBER)
 #endif
 
 class test_class {

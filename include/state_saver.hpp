@@ -270,60 +270,60 @@ saver_success(U&) -> saver_success<U>;
 
 } // namespace nstd
 
-// NEARGYE_MAYBE_UNUSED suppresses compiler warnings on unused entities, if any.
-#if !defined(NEARGYE_MAYBE_UNUSED)
+// NEARGYE_STATE_SAVER_MAYBE_UNUSED suppresses compiler warnings on unused entities, if any.
+#if !defined(NEARGYE_STATE_SAVER_MAYBE_UNUSED)
 #  if defined(__clang__)
 #    if (__clang_major__ * 10 + __clang_minor__) >= 39 && __cplusplus >= 201703L
-#      define NEARGYE_MAYBE_UNUSED [[maybe_unused]]
+#      define NEARGYE_STATE_SAVER_MAYBE_UNUSED [[maybe_unused]]
 #    else
-#      define NEARGYE_MAYBE_UNUSED __attribute__((__unused__))
+#      define NEARGYE_STATE_SAVER_MAYBE_UNUSED __attribute__((__unused__))
 #    endif
 #  elif defined(__GNUC__)
 #    if __GNUC__ >= 7 && __cplusplus >= 201703L
-#      define NEARGYE_MAYBE_UNUSED [[maybe_unused]]
+#      define NEARGYE_STATE_SAVER_MAYBE_UNUSED [[maybe_unused]]
 #    else
-#      define NEARGYE_MAYBE_UNUSED __attribute__((__unused__))
+#      define NEARGYE_STATE_SAVER_MAYBE_UNUSED __attribute__((__unused__))
 #    endif
 #  elif defined(_MSC_VER)
 #    if _MSC_VER >= 1911 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
-#      define NEARGYE_MAYBE_UNUSED [[maybe_unused]]
+#      define NEARGYE_STATE_SAVER_MAYBE_UNUSED [[maybe_unused]]
 #    else
-#      define NEARGYE_MAYBE_UNUSED __pragma(warning(suppress : 4100 4101 4189))
+#      define NEARGYE_STATE_SAVER_MAYBE_UNUSED __pragma(warning(suppress : 4100 4101 4189))
 #    endif
 #  else
-#    define NEARGYE_MAYBE_UNUSED
+#    define NEARGYE_STATE_SAVER_MAYBE_UNUSED
 #  endif
 #endif
 
-#if !defined(NEARGYE_STR_CONCAT)
-#  define NEARGYE_STR_CONCAT_(s1, s2) s1##s2
-#  define NEARGYE_STR_CONCAT(s1, s2)  NEARGYE_STR_CONCAT_(s1, s2)
+#if !defined(NEARGYE_STATE_SAVER_STR_CONCAT)
+#  define NEARGYE_STATE_SAVER_STR_CONCAT_(s1, s2) s1##s2
+#  define NEARGYE_STATE_SAVER_STR_CONCAT(s1, s2)  NEARGYE_STATE_SAVER_STR_CONCAT_(s1, s2)
 #endif
 
-#if !defined(NEARGYE_COUNTER)
+#if !defined(NEARGYE_STATE_SAVER_COUNTER)
 #  if defined(__COUNTER__)
-#    define NEARGYE_COUNTER __COUNTER__
+#    define NEARGYE_STATE_SAVER_COUNTER __COUNTER__
 #  elif defined(__LINE__)
-#    define NEARGYE_COUNTER __LINE__
+#    define NEARGYE_STATE_SAVER_COUNTER __LINE__
 #  endif
 #endif
 
-#define NEARGYE_STATE_SAVER_WITH_(s, x, g, i) for (bool i = true; i; i = false) for (NEARGYE_MAYBE_UNUSED s g{x}; i; i = false)
-#define NEARGYE_STATE_SAVER_WITH(s, x)        NEARGYE_STATE_SAVER_WITH_(s, x, NEARGYE_STR_CONCAT(NEARGYE_INTERNAL_OBJECT_, NEARGYE_COUNTER), NEARGYE_STR_CONCAT(NEARGYE_INTERNAL_FLAG_, NEARGYE_COUNTER))
+#define NEARGYE_STATE_SAVER_WITH_(s, x, g, i) for (bool i = true; i; i = false) for (NEARGYE_STATE_SAVER_MAYBE_UNUSED s g{x}; i; i = false)
+#define NEARGYE_STATE_SAVER_WITH(s, x)        NEARGYE_STATE_SAVER_WITH_(s, x, NEARGYE_STATE_SAVER_STR_CONCAT(NEARGYE_STATE_SAVER_INTERNAL_OBJECT_, NEARGYE_STATE_SAVER_COUNTER), NEARGYE_STATE_SAVER_STR_CONCAT(NEARGYE_STATE_SAVER_INTERNAL_FLAG_, NEARGYE_STATE_SAVER_COUNTER))
 
 // SAVER_EXIT saves the original variable value and restores on scope exit.
 #define MAKE_SAVER_EXIT(name, x) ::nstd::saver_exit<decltype(x)> name{x}
-#define SAVER_EXIT(x)            NEARGYE_MAYBE_UNUSED const MAKE_SAVER_EXIT(NEARGYE_STR_CONCAT(SAVER_EXIT_, NEARGYE_COUNTER), x)
+#define SAVER_EXIT(x)            NEARGYE_STATE_SAVER_MAYBE_UNUSED const MAKE_SAVER_EXIT(NEARGYE_STATE_SAVER_STR_CONCAT(SAVER_EXIT_, NEARGYE_STATE_SAVER_COUNTER), x)
 #define WITH_SAVER_EXIT(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_exit<decltype(x)>, x)
 
 // SAVER_FAIL saves the original variable value and restores on scope exit when a new exception is being unwound.
 #define MAKE_SAVER_FAIL(name, x) ::nstd::saver_fail<decltype(x)> name{x}
-#define SAVER_FAIL(x)            NEARGYE_MAYBE_UNUSED const MAKE_SAVER_FAIL(NEARGYE_STR_CONCAT(SAVER_FAIL_, NEARGYE_COUNTER), x)
+#define SAVER_FAIL(x)            NEARGYE_STATE_SAVER_MAYBE_UNUSED const MAKE_SAVER_FAIL(NEARGYE_STATE_SAVER_STR_CONCAT(SAVER_FAIL_, NEARGYE_STATE_SAVER_COUNTER), x)
 #define WITH_SAVER_FAIL(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_fail<decltype(x)>, x)
 
 // SAVER_SUCCESS saves the original variable value and restores on scope exit when no new exception is being unwound.
 #define MAKE_SAVER_SUCCESS(name, x) ::nstd::saver_success<decltype(x)> name{x}
-#define SAVER_SUCCESS(x)            NEARGYE_MAYBE_UNUSED const MAKE_SAVER_SUCCESS(NEARGYE_STR_CONCAT(SAVER_SUCCESS_, NEARGYE_COUNTER), x)
+#define SAVER_SUCCESS(x)            NEARGYE_STATE_SAVER_MAYBE_UNUSED const MAKE_SAVER_SUCCESS(NEARGYE_STATE_SAVER_STR_CONCAT(SAVER_SUCCESS_, NEARGYE_STATE_SAVER_COUNTER), x)
 #define WITH_SAVER_SUCCESS(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_success<decltype(x)>, x)
 
 #endif // NEARGYE_STATE_SAVER_HPP

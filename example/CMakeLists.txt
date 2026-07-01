@@ -25,6 +25,7 @@ function(make_example target std)
 endfunction()
 
 make_example(attributes_example          cxx_std_11)
+make_example(byte_example                cxx_std_17)
 make_example(unused_example              cxx_std_11)
 make_example(nstd_example                cxx_std_17)
 make_example(state_saver_exit_example    cxx_std_11)

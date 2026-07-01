@@ -32,11 +32,17 @@ ATTR_NORETURN void foo2() { std::terminate(); }
 
 ATTR_DEPRECATED("reason") void foo3() {}
 
+ATTR_ALWAYS_INLINE int foo3_inline(int value) { return value + 1; }
+
 ATTR_NODISCARD int foo4() { return 42; }
 
 ATTR_NODISCARD_MSG("use the computed value") int foo5() { return 42; }
 
 struct empty_type {};
+
+ATTR_TRIVIAL_ABI struct trivial_abi_type {
+  int value = 0;
+};
 
 struct foo6 {
   ATTR_NO_UNIQUE_ADDRESS empty_type empty;
@@ -47,9 +53,12 @@ int main() {
   ATTR_MAYBE_UNUSED int a = foo4();  // No warning: unused variable 'a'.
   ATTR_MAYBE_UNUSED int b = foo5();  // No warning: unused variable 'b'.
   ATTR_MAYBE_UNUSED foo6 c{};
+  ATTR_MAYBE_UNUSED trivial_abi_type d{};
+
+  ATTR_ASSUME(a == b);
 
   if (ATTR_LIKELY(a == b)) {
-    c.value = a;
+    c.value = foo3_inline(a);
   } else if (ATTR_UNLIKELY(a == 0)) {
     return 1;
   }

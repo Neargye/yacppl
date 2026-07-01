@@ -30,6 +30,7 @@
 #ifndef NEARGYE_NSTD_BYTE_HPP
 #define NEARGYE_NSTD_BYTE_HPP
 
+#include <cstddef>
 #include <cstring>
 #include <type_traits>
 
@@ -64,65 +65,83 @@ template <typename I = unsigned char>
 }
 
 template <typename I>
-[[nodiscard]] constexpr auto operator<<(byte& b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte> {
+[[nodiscard]] constexpr auto operator<<(byte b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte> {
   return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(b) << shift));
 }
 
 template <typename I>
-[[nodiscard]] constexpr auto operator>>(byte& b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte> {
+[[nodiscard]] constexpr auto operator>>(byte b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte> {
   return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(b) >> shift));
 }
 
-[[nodiscard]] constexpr byte& operator|=(byte& lhs, byte rhs) noexcept {
+constexpr byte& operator|=(byte& lhs, byte rhs) noexcept {
   return lhs = lhs | rhs;
 }
 
-[[nodiscard]] constexpr byte& operator&=(byte& lhs, byte rhs) noexcept {
+constexpr byte& operator&=(byte& lhs, byte rhs) noexcept {
   return lhs = lhs & rhs;
 }
 
-[[nodiscard]] constexpr byte& operator^=(byte& lhs, byte rhs) noexcept {
+constexpr byte& operator^=(byte& lhs, byte rhs) noexcept {
   return lhs = lhs ^ rhs;
 }
 
 template <typename I>
-[[nodiscard]] constexpr auto operator<<=(byte& b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte&> {
+constexpr auto operator<<=(byte& b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte&> {
   return b = b << shift;
 }
 
 template <typename I>
-[[nodiscard]] constexpr auto operator>>=(byte& b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte&> {
+constexpr auto operator>>=(byte& b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte&> {
   return b = b >> shift;
 }
 
 template <typename T>
-auto to_bytes(byte* dst, const T& src) -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
-  static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
+auto to_bytes(byte* dst, const T& src) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
+  static_assert(std::is_trivially_copyable_v<byte>, "nstd::to_bytes requires byte is trivially copyable.");
   static_assert(std::is_trivially_copyable_v<T>,    "nstd::to_bytes requires T is trivially copyable.");
   static_cast<void>(std::memcpy(dst, &src, sizeof(T)));
 }
 
 template <typename T>
-auto to_bytes(byte* dst, const T* src, std::size_t count) -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
-  static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
+auto to_bytes(byte* dst, const T* src, std::size_t count) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
+  static_assert(std::is_trivially_copyable_v<byte>, "nstd::to_bytes requires byte is trivially copyable.");
   static_assert(std::is_trivially_copyable_v<T>,    "nstd::to_bytes requires T is trivially copyable.");
-  static_cast<void>(std::memcpy(dst, src, count * sizeof(byte)));
+  static_cast<void>(std::memcpy(dst, src, count * sizeof(T)));
+}
+
+template <typename T, std::size_t N>
+auto to_bytes(byte* dst, const T (&src)[N]) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
+  return to_bytes(dst, src, N);
 }
 
 template <typename T>
-[[nodiscard]] auto from_bytes(const byte* src) -> std::enable_if_t<std::is_trivial_v<T>, T> {
+[[nodiscard]] auto from_bytes(const byte* src) noexcept(std::is_nothrow_default_constructible_v<T>) -> std::enable_if_t<std::is_trivially_copyable_v<T> && std::is_default_constructible_v<T>, T> {
   static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
-  static_assert(std::is_trivial_v<T>,               "nstd::from_bytes requires T is trivial.");
+  static_assert(std::is_trivially_copyable_v<T>,    "nstd::from_bytes requires T is trivially copyable.");
+  static_assert(std::is_default_constructible_v<T>, "nstd::from_bytes requires T is default constructible.");
   T dst;
   static_cast<void>(std::memcpy(&dst, src, sizeof(T)));
   return dst;
 }
 
 template <typename T>
-[[nodiscard]] auto from_bytes(T* dst, const byte* src, std::size_t count) -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
+auto from_bytes(T& dst, const byte* src) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
   static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
   static_assert(std::is_trivially_copyable_v<T>,    "nstd::from_bytes requires T is trivially copyable.");
-  static_cast<void>(std::memcpy(dst, src, count * sizeof(byte)));
+  static_cast<void>(std::memcpy(&dst, src, sizeof(T)));
+}
+
+template <typename T>
+auto from_bytes(T* dst, const byte* src, std::size_t count) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
+  static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
+  static_assert(std::is_trivially_copyable_v<T>,    "nstd::from_bytes requires T is trivially copyable.");
+  static_cast<void>(std::memcpy(dst, src, count * sizeof(T)));
+}
+
+template <typename T, std::size_t N>
+auto from_bytes(T (&dst)[N], const byte* src) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
+  return from_bytes(dst, src, N);
 }
 
 } // namespace nstd

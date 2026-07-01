@@ -40,6 +40,22 @@
 
 See [attributes_example.cpp](example/attributes_example.cpp) for a complete example.
 
+## byte
+
+`byte` provides a C++17 `std::byte`-style distinct byte type in the `nstd` namespace. It is not an arithmetic type and does not alias `char`; use explicit conversion helpers when an integer value is needed.
+
+### Operations
+
+* `nstd::byte` - scoped enum backed by `unsigned char`.
+* `nstd::to_byte(value)` - converts an integral value to `nstd::byte`.
+* `nstd::to_integer<T>(byte)` - converts a byte to an integral type.
+* Bitwise operators are supported: `~`, `|`, `&`, `^`, `<<`, `>>`, and their compound-assignment forms.
+* `nstd::to_bytes(dst, value)` and `nstd::from_bytes<T>(src)` copy a single trivially copyable object through byte storage. The return-by-value `from_bytes<T>` form also requires `T` to be default constructible.
+* `nstd::from_bytes(value, src)` copies into an existing trivially copyable object, including objects that are not default constructible.
+* `nstd::to_bytes(dst, values, count)` and `nstd::from_bytes(dst, src, count)` copy arrays of trivially copyable objects. Bounded C-style arrays also have overloads that infer the element count.
+
+See [byte_example.cpp](example/byte_example.cpp) for a complete example.
+
 ## state_saver
 
 `state_saver` saves a copy of an object and restores that value later. It is useful for temporarily changing configuration flags, counters, stream state, or any other assignable object whose original value must be restored reliably.

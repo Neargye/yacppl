@@ -6,7 +6,7 @@
 
 * [attributes](include/attributes.hpp) - Attributes for C++98 and later.
 
-* [UNUSED](include/unused.hpp) - Macro with varying number of arguments to avoid "unused variable" warnings, with no effect on binary size, for C++11 and later.
+* [unused](include/unused.hpp) - Helpers with varying number of arguments to avoid "unused variable" warnings, with no effect on binary size, for C++11 and later.
 
 * [concepts](include/concepts.hpp) - SFINAE-friendly concept-like aliases for C++11 and later.
 
@@ -29,7 +29,7 @@
 * `ATTR_NODISCARD_MSG("reason")` - same as `ATTR_NODISCARD`, with a reason on compilers that support C++20 `[[nodiscard("reason")]]`.
 * `ATTR_MAYBE_UNUSED` - suppresses unused warnings on declarations.
 * `ATTR_TRIVIAL_ABI` - requests Clang's `trivial_abi` calling convention for eligible class types. Put it after the `class` or `struct` keyword, for example `struct ATTR_TRIVIAL_ABI type`; other compilers use a no-op fallback.
-* `ATTR_NO_UNIQUE_ADDRESS` - marks a non-static data member that does not need a distinct address on compilers that support C++20 `[[no_unique_address]]`.
+* `ATTR_NO_UNIQUE_ADDRESS` - marks a non-static data member that does not need a distinct address. MSVC uses `[[msvc::no_unique_address]]`; other supporting compilers use C++20 `[[no_unique_address]]`.
 
 ### Statement and expression helpers
 
@@ -40,7 +40,7 @@
 
 See [attributes_example.cpp](example/attributes_example.cpp) for a complete example.
 
-## UNUSED
+## unused
 
 `unused` provides local-scope helpers for intentionally unused variables and parameters.
 

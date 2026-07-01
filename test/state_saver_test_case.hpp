@@ -24,14 +24,19 @@
 #include <stdexcept>
 #include <string>
 
-#define CATCH_CONFIG_MAIN
-#include <catch.hpp>
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <doctest.h>
 
 #include <state_saver.hpp>
 using namespace nstd;
 
+#if !defined(CASE_TEST_STR)
+#  define CASE_TEST_STR_(x) #x
+#  define CASE_TEST_STR(x) CASE_TEST_STR_(x)
+#endif
+
 #if !defined(CASE_TEST)
-#  define CASE_TEST(name) TEST_CASE(std::string(name).append(" ").append(std::to_string(CASE_NUMBER)))
+#  define CASE_TEST(name) TEST_CASE(name " " CASE_TEST_STR(CASE_NUMBER))
 #endif
 
 #if !defined(test_class)

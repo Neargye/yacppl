@@ -35,5 +35,9 @@ int main() {
   int d = 0;
   NSTD_UNUSED(d); // No warning: NSTD_UNUSED variable 'd'.
 
+  int e = 0;
+  float f = 0.0f;
+  nstd::unused(e, f); // No warning: nstd::unused variable 'e', 'f'.
+
   return 0;
 }

@@ -40,6 +40,17 @@
 
 See [attributes_example.cpp](example/attributes_example.cpp) for a complete example.
 
+## UNUSED
+
+`unused` provides local-scope helpers for intentionally unused variables and parameters.
+
+* `nstd::unused(args...)` - function helper for one or more variables and parameters. It evaluates arguments like a normal function call and binds them by reference without copying.
+* `NSTD_UNUSED(args...)` - macro helper for one or more variables and parameters. On non-MSVC compilers it checks arguments through an unevaluated `decltype` expression; on MSVC it uses the traditional `(void)` path. Do not pass expressions with side effects; use an explicit `(void)expr` when evaluating and discarding an expression is intended.
+
+Use `ATTR_MAYBE_UNUSED` from [attributes](include/attributes.hpp) for declaration-level suppression and `NSTD_UNUSED` for local expression-level suppression.
+
+See [unused_example.cpp](example/unused_example.cpp) for a complete example.
+
 ## byte
 
 `byte` provides a C++17 `std::byte`-style distinct byte type in the `nstd` namespace. It is not an arithmetic type and does not alias `char`; use explicit conversion helpers when an integer value is needed.

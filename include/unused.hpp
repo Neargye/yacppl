@@ -32,7 +32,7 @@
 
 namespace nstd {
 
-// Function with varying number of arguments to avoid "unused variable" warnings.
+// Function with varying number of arguments to avoid unused warnings.
 template <typename... Args>
 #if defined(__cpp_constexpr) && __cpp_constexpr >= 201304L
 constexpr
@@ -44,10 +44,10 @@ void unused(const Args&...) noexcept {}
 } // namespace nstd
 
 #if defined(_MSC_VER)
-// Macro with varying number of arguments to avoid "unused variable" warnings.
+// Macro with varying number of arguments to avoid unused warnings.
 #  define NSTD_UNUSED(...) ((void)(__VA_ARGS__))
 #else
-// Macro with varying number of arguments to avoid "unused variable" warnings.
+// Macro with varying number of arguments to avoid unused warnings.
 #  define NSTD_UNUSED(...) (decltype(::nstd::unused(__VA_ARGS__))())
 #endif
 

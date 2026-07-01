@@ -8,7 +8,7 @@
 
 * [UNUSED](include/unused.hpp) - Macro with varying number of arguments to avoid "unused variable" warnings, with no effect on binary size, for C++11 and later.
 
-* [concepts](include/concepts.hpp) - Implementations concepts-like, for C++11 and later.
+* [concepts](include/concepts.hpp) - SFINAE-friendly concept-like aliases for C++11 and later.
 
 * [type_traits](include/type_traits.hpp) - Implementations of some type traits, for C++11 and later.
 
@@ -55,6 +55,85 @@ See [attributes_example.cpp](example/attributes_example.cpp) for a complete exam
 * `nstd::to_bytes(dst, values, count)` and `nstd::from_bytes(dst, src, count)` copy arrays of trivially copyable objects. Bounded C-style arrays also have overloads that infer the element count.
 
 See [byte_example.cpp](example/byte_example.cpp) for a complete example.
+
+## concepts
+
+`concepts` provides C++11-compatible type aliases that behave like lightweight constraints in SFINAE contexts. They are not C++20 `concept` declarations; each alias exposes the constrained type when the predicate is true and is ill-formed during substitution when the predicate is false.
+
+```cpp
+#include <concepts.hpp>
+
+template <typename T>
+nstd::Integral<T> next_value(T value) {
+  return static_cast<T>(value + 1);
+}
+```
+
+### Building blocks
+
+* `nstd::EnableIf<C, T>` - exposes `T` when `C` is true.
+* `nstd::TypeConcept<T, C>` - exposes `T` when `C` is true.
+
+### Type categories
+
+* `nstd::RValue<T>` / `nstd::LValue<T>` - forwarding-reference deduction result category. `RValue` rejects const rvalues.
+* `nstd::Reference<T>` - lvalue or rvalue reference.
+* `nstd::Const<T>` / `nstd::NotConst<T>` - top-level const qualification after reference removal.
+* `nstd::Volatile<T>` / `nstd::NotVolatile<T>` - top-level volatile qualification after reference removal.
+* `nstd::Void<T>` and `nstd::NullPointer<T>`.
+* `nstd::Arithmetic<T>`, `nstd::Integral<T>`, `nstd::SignedIntegral<T>`, `nstd::UnsignedIntegral<T>`, `nstd::FloatingPoint<T>`.
+* `nstd::Enum<T>`, `nstd::Pointer<T>`, `nstd::MemberPointer<T>`, `nstd::Array<T>`, `nstd::Function<T>`.
+* `nstd::Object<T>`, `nstd::Scalar<T>`, `nstd::Class<T>`, `nstd::Union<T>`.
+* `nstd::Trivial<T>` and `nstd::TriviallyCopyable<T>`.
+
+### Object capabilities and relations
+
+* `nstd::Constructible<T, Args...>` and `nstd::NothrowConstructible<T, Args...>`.
+* `nstd::DefaultConstructible<T>`, `nstd::CopyConstructible<T>`, `nstd::MoveConstructible<T>`.
+* `nstd::Destructible<T>` and `nstd::NothrowDestructible<T>`.
+* `nstd::Assignable<T, U>` and `nstd::NothrowAssignable<T, U>`.
+* `nstd::CopyAssignable<T>` and `nstd::MoveAssignable<T>`.
+* `nstd::Same<T, U>` - exactly the same type.
+* `nstd::ConvertibleTo<T, U>` - `T` is convertible to `U`.
+
+See [concepts_example.cpp](example/concepts_example.cpp) for a complete example.
+
+## type_traits
+
+`type_traits` provides C++11-compatible helpers for type transformation, detection, and a few missing standard-library traits.
+
+### Alias helpers
+
+* `nstd::bool_constant<B>`, `nstd::enable_if_t<C, T>`, `nstd::conditional_t<C, T, F>`.
+* `nstd::decay_t<T>`, `nstd::remove_const_t<T>`, `nstd::remove_volatile_t<T>`, `nstd::remove_cv_t<T>`.
+* `nstd::remove_pointer_t<T>`, `nstd::remove_reference_t<T>`, `nstd::remove_extent_t<T>`, `nstd::remove_all_extents_t<T>`.
+* `nstd::add_const_t<T>`, `nstd::add_volatile_t<T>`, `nstd::add_cv_t<T>`.
+* `nstd::add_pointer_t<T>`, `nstd::add_lvalue_reference_t<T>`, `nstd::add_rvalue_reference_t<T>`.
+* `nstd::make_signed_t<T>` and `nstd::make_unsigned_t<T>`.
+* `nstd::underlying_type_t<T>`.
+
+### Detection idiom
+
+* `nstd::void_t<T...>`.
+* `nstd::is_detected<Op, Args...>` and, when variable templates are supported, `nstd::is_detected_v<Op, Args...>`.
+* `nstd::detected_t<Op, Args...>`, `nstd::detected_or<Default, Op, Args...>`, and `nstd::detected_or_t<Default, Op, Args...>`.
+* `nstd::is_detected_exact<Expected, Op, Args...>`.
+* `nstd::is_detected_convertible<To, Op, Args...>`.
+
+### Transformations and predicates
+
+* `nstd::identity<T>` / `nstd::identity_t<T>` and `nstd::type_identity<T>` / `nstd::type_identity_t<T>`.
+* `nstd::remove_ptr<T>` / `nstd::remove_ptr_t<T>`.
+* `nstd::remove_ref<T>` / `nstd::remove_ref_t<T>`.
+* `nstd::remove_cv_ref<T>` / `nstd::remove_cv_ref_t<T>` and `nstd::remove_cvref_t<T>`.
+* `nstd::remove_all_ptr<T>` / `nstd::remove_all_ptr_t<T>`.
+* `nstd::remove_all_cv_ref_ptr<T>` / `nstd::remove_all_cv_ref_ptr_t<T>`.
+* `nstd::remove_all_cv_ref_ptr_ext<T>` / `nstd::remove_all_cv_ref_ptr_ext_t<T>`.
+* `nstd::conjunction<T...>`, `nstd::disjunction<T...>`, and `nstd::negation<T>`.
+* `nstd::is_same_signedness<T, U>` - true only when both types are signed or both types are unsigned.
+* `nstd::is_nothrow_convertible<From, To>` - C++11-compatible backport of `std::is_nothrow_convertible`.
+
+See [type_traits_example.cpp](example/type_traits_example.cpp) for a complete example.
 
 ## state_saver
 

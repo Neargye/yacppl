@@ -34,8 +34,25 @@ ATTR_DEPRECATED("reason") void foo3() {}
 
 ATTR_NODISCARD int foo4() { return 42; }
 
+ATTR_NODISCARD_MSG("use the computed value") int foo5() { return 42; }
+
+struct empty_type {};
+
+struct foo6 {
+  ATTR_NO_UNIQUE_ADDRESS empty_type empty;
+  int value = 0;
+};
+
 int main() {
   ATTR_MAYBE_UNUSED int a = foo4();  // No warning: unused variable 'a'.
+  ATTR_MAYBE_UNUSED int b = foo5();  // No warning: unused variable 'b'.
+  ATTR_MAYBE_UNUSED foo6 c{};
+
+  if (ATTR_LIKELY(a == b)) {
+    c.value = a;
+  } else if (ATTR_UNLIKELY(a == 0)) {
+    return 1;
+  }
 
   switch (a) {
     case 1:

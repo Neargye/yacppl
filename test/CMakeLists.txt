@@ -57,6 +57,7 @@ else()
 endif()
 
 make_test(${CMAKE_PROJECT_NAME}-cpp11.t "${CPP11_FLAG}")
+make_mode_test(${CMAKE_PROJECT_NAME}-attributes.t attributes_test.cpp "${CPP11_FLAG}")
 make_mode_test(${CMAKE_PROJECT_NAME}-suppress-throw-restore.t state_saver_suppress_throw_restore_test.cpp "${CPP11_FLAG}")
 make_mode_test(${CMAKE_PROJECT_NAME}-no-throw-restore.t state_saver_no_throw_restore_test.cpp "${CPP11_FLAG}")
 make_mode_test(${CMAKE_PROJECT_NAME}-force-copy-assignable.t state_saver_force_assignable_test.cpp "${CPP11_FLAG}")

@@ -16,6 +16,30 @@
 
 * [utility](include/utility.hpp) - implementations of some utility functions, for C++17 and later.
 
+## attributes
+
+`attributes` provides small portability macros for common compiler and standard attributes. Unsupported attributes degrade to a safe fallback.
+
+### Declaration attributes
+
+* `ATTR_NORETURN` - marks a function that does not return.
+* `ATTR_ALWAYS_INLINE` - strongly suggests that a function should be inlined.
+* `ATTR_DEPRECATED("reason")` - marks a declaration as deprecated.
+* `ATTR_NODISCARD` - asks the compiler to warn when a return value is discarded.
+* `ATTR_NODISCARD_MSG("reason")` - same as `ATTR_NODISCARD`, with a reason on compilers that support C++20 `[[nodiscard("reason")]]`.
+* `ATTR_MAYBE_UNUSED` - suppresses unused warnings on declarations.
+* `ATTR_TRIVIAL_ABI` - requests Clang's `trivial_abi` calling convention for eligible class types; other compilers use a no-op fallback.
+* `ATTR_NO_UNIQUE_ADDRESS` - marks a non-static data member that does not need a distinct address on compilers that support C++20 `[[no_unique_address]]`.
+
+### Statement and expression helpers
+
+* `ATTR_ASSUME(expr)` - optimizer assumption statement. On supporting compilers, behavior is undefined if `expr` is false; unsupported compilers use a no-op fallback that does not evaluate `expr`.
+* `ATTR_FALLTHROUGH` - marks an intentional `switch` fallthrough.
+* `ATTR_LIKELY(expr)` - expression helper for a likely branch condition.
+* `ATTR_UNLIKELY(expr)` - expression helper for an unlikely branch condition.
+
+See [attributes_example.cpp](example/attributes_example.cpp) for a complete example.
+
 ## state_saver
 
 `state_saver` saves a copy of an object and restores that value later. It is useful for temporarily changing configuration flags, counters, stream state, or any other assignable object whose original value must be restored reliably.

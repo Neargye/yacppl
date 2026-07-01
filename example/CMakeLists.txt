@@ -3,7 +3,7 @@
 if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
     set(CMAKE_VERBOSE_MAKEFILE ON)
     set(OPTIONS -Wall -Wextra -pedantic-errors -Werror)
-    check_cxx_compiler_flag(/-Wimplicit-fallthrough HAS_FALLTHROUGH_FLAG)
+    check_cxx_compiler_flag(-Wimplicit-fallthrough HAS_FALLTHROUGH_FLAG)
     if(HAS_FALLTHROUGH_FLAG)
         set(OPTIONS ${OPTIONS} -Wimplicit-fallthrough)
     endif()

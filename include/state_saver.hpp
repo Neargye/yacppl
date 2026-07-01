@@ -30,33 +30,31 @@
 #ifndef NEARGYE_STATE_SAVER_HPP
 #define NEARGYE_STATE_SAVER_HPP
 
-// Sometimes a certain value has to change only for a limited scope.
-// This class wrapper saves a copy of the current state of some object,
-// and resets the object’s state at destruction time, undoing any change the object may have gone through.
-// * saver_exit - saves the original variable value and restores on scope exit.
-// * saver_fail - saves the original variable value and restores on scope exit when an exception has been thrown.
-// * saver_success - saves the original variable value and restores on scope exit when no exceptions have been thrown.
+// state_saver saves an object's current value and restores it later.
+// * saver_exit - restores on scope exit.
+// * saver_fail - restores on scope exit when an exception is being unwound.
+// * saver_success - restores on scope exit when no new exception is being unwound.
 
 // Interface of state_saver:
-// * constructor state_saver(T& object) - construct state_saver with saved object.
-// * dismiss() - dismiss restore on scope exit.
-// * restore() - resets the object’s state. Requirements copy operator =.
+// * constructor state_saver(T& object) - saves the current object value.
+// * dismiss() - disables automatic restore on scope exit.
+// * restore() - restores the saved value immediately. Requires copy assignment.
 
-// Requirements to saved object:
-// * Object semantic (cannot be reference, function, ...).
+// Requirements for the saved object:
+// * Object semantics (non-const, non-pointer, non-array, non-function).
 // * Copy constructor.
-// * operator= (no-throw one preferred).
+// * Assignment operator selected by the configured/default restore policy.
 
 // Throwable settings:
-// STATE_SAVER_NO_THROW_CONSTRUCTIBLE requires nothrow constructible action.
-// STATE_SAVER_MAY_THROW_RESTORE restore may throw exceptions.
+// STATE_SAVER_NO_THROW_CONSTRUCTIBLE requires nothrow value copy construction.
+// STATE_SAVER_MAY_THROW_RESTORE allows restore to throw exceptions.
 // STATE_SAVER_NO_THROW_RESTORE requires noexcept restore.
-// STATE_SAVER_SUPPRESS_THROW_RESTORE exceptions during restore will be suppressed.
-// STATE_SAVER_CATCH_HANDLER exceptions handler. If STATE_SAVER_SUPPRESS_THROW_RESTORE is not defined, it will do nothing.
+// STATE_SAVER_SUPPRESS_THROW_RESTORE suppresses exceptions thrown during restore.
+// STATE_SAVER_CATCH_HANDLER runs from the suppression catch block. It is used only with STATE_SAVER_SUPPRESS_THROW_RESTORE.
 
 // Assignable settings:
-// STATE_SAVER_FORCE_MOVE_ASSIGNABLE restore on scope exit will be move assigned.
-// STATE_SAVER_FORCE_COPY_ASSIGNABLE restore on scope exit will be copy assigned.
+// STATE_SAVER_FORCE_MOVE_ASSIGNABLE restores on scope exit through move assignment.
+// STATE_SAVER_FORCE_COPY_ASSIGNABLE restores on scope exit through copy assignment.
 
 #include <type_traits>
 #if (defined(_MSC_VER) && _MSC_VER >= 1900) || ((defined(__clang__) || defined(__GNUC__)) && __cplusplus >= 201700L)
@@ -82,13 +80,13 @@ namespace nstd {
 namespace detail {
 
 #if defined(STATE_SAVER_SUPPRESS_THROW_RESTORE) && (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND))
-#  define NEARGYE_NOEXCEPT(...) noexcept
-#  define NEARGYE_TRY           try {
-#  define NEARGYE_CATCH         } catch (...) { SCOPE_GUARD_CATCH_HANDLER }
+#  define NEARGYE_STATE_SAVER_NOEXCEPT(...) noexcept
+#  define NEARGYE_STATE_SAVER_TRY           try {
+#  define NEARGYE_STATE_SAVER_CATCH         } catch (...) { STATE_SAVER_CATCH_HANDLER }
 #else
-#  define NEARGYE_NOEXCEPT(...) noexcept(__VA_ARGS__)
-#  define NEARGYE_TRY
-#  define NEARGYE_CATCH
+#  define NEARGYE_STATE_SAVER_NOEXCEPT(...) noexcept(__VA_ARGS__)
+#  define NEARGYE_STATE_SAVER_TRY
+#  define NEARGYE_STATE_SAVER_CATCH
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER < 1900
@@ -216,28 +214,28 @@ class state_saver {
   }
 
   template <typename O = T>
-  auto restore() NEARGYE_NOEXCEPT(std::is_nothrow_assignable<O&, O&>::value) -> typename std::enable_if<std::is_same<T, O>::value && std::is_assignable<O&, O&>::value>::type {
+  auto restore() NEARGYE_STATE_SAVER_NOEXCEPT(std::is_nothrow_assignable<O&, O&>::value) -> typename std::enable_if<std::is_same<T, O>::value && std::is_assignable<O&, O&>::value>::type {
     static_assert(std::is_assignable<O&, O&>::value, "state_saver::restore requires copy operator=.");
 #if defined(STATE_SAVER_NO_THROW_RESTORE)
     static_assert(std::is_nothrow_assignable<O&, O&>::value, "state_saver::restore requires noexcept copy operator=.");
 #endif
-    NEARGYE_TRY
+    NEARGYE_STATE_SAVER_TRY
       previous_ref_ = previous_value_;
-    NEARGYE_CATCH
+    NEARGYE_STATE_SAVER_CATCH
   }
 
-  ~state_saver() NEARGYE_NOEXCEPT(std::is_nothrow_assignable<T&, assignable_t>::value) {
+  ~state_saver() NEARGYE_STATE_SAVER_NOEXCEPT(std::is_nothrow_assignable<T&, assignable_t>::value) {
     if (policy_.should_execute()) {
-      NEARGYE_TRY
+      NEARGYE_STATE_SAVER_TRY
         previous_ref_ = static_cast<assignable_t>(previous_value_);
-      NEARGYE_CATCH
+      NEARGYE_STATE_SAVER_CATCH
     }
   }
 };
 
-#undef NEARGYE_NOEXCEPT
-#undef NEARGYE_TRY
-#undef NEARGYE_CATCH
+#undef NEARGYE_STATE_SAVER_NOEXCEPT
+#undef NEARGYE_STATE_SAVER_TRY
+#undef NEARGYE_STATE_SAVER_CATCH
 
 } // namespace nstd::detail
 
@@ -310,22 +308,22 @@ saver_success(U&) -> saver_success<U>;
 #  endif
 #endif
 
-#define NEARGYE_STATE_SAVER_WITH_(s, i) for (int i = 1; i--; s)
-#define NEARGYE_STATE_SAVER_WITH(s)     NEARGYE_STATE_SAVER_WITH_(s, NEARGYE_STR_CONCAT(NEARGYE_INTERNAL_OBJECT_, NEARGYE_COUNTER))
+#define NEARGYE_STATE_SAVER_WITH_(s, x, g, i) for (bool i = true; i; i = false) for (NEARGYE_MAYBE_UNUSED s g{x}; i; i = false)
+#define NEARGYE_STATE_SAVER_WITH(s, x)        NEARGYE_STATE_SAVER_WITH_(s, x, NEARGYE_STR_CONCAT(NEARGYE_INTERNAL_OBJECT_, NEARGYE_COUNTER), NEARGYE_STR_CONCAT(NEARGYE_INTERNAL_FLAG_, NEARGYE_COUNTER))
 
 // SAVER_EXIT saves the original variable value and restores on scope exit.
 #define MAKE_SAVER_EXIT(name, x) ::nstd::saver_exit<decltype(x)> name{x}
 #define SAVER_EXIT(x)            NEARGYE_MAYBE_UNUSED const MAKE_SAVER_EXIT(NEARGYE_STR_CONCAT(SAVER_EXIT_, NEARGYE_COUNTER), x)
-#define WITH_SAVER_EXIT(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_exit<decltype(x)>{x})
+#define WITH_SAVER_EXIT(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_exit<decltype(x)>, x)
 
-// SAVER_FAIL saves the original variable value and restores on scope exit when an exception has been thrown.
+// SAVER_FAIL saves the original variable value and restores on scope exit when a new exception is being unwound.
 #define MAKE_SAVER_FAIL(name, x) ::nstd::saver_fail<decltype(x)> name{x}
 #define SAVER_FAIL(x)            NEARGYE_MAYBE_UNUSED const MAKE_SAVER_FAIL(NEARGYE_STR_CONCAT(SAVER_FAIL_, NEARGYE_COUNTER), x)
-#define WITH_SAVER_FAIL(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_fail<decltype(x)>{x})
+#define WITH_SAVER_FAIL(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_fail<decltype(x)>, x)
 
-// SAVER_SUCCESS saves the original variable value and restores on scope exit when no exceptions have been thrown.
+// SAVER_SUCCESS saves the original variable value and restores on scope exit when no new exception is being unwound.
 #define MAKE_SAVER_SUCCESS(name, x) ::nstd::saver_success<decltype(x)> name{x}
-#define SAVER_SUCCESS(x)            NEARGYE_MAYBE_UNUSED const MAKE_SAVER_SUCCESS(NEARGYE_STR_CONCAT(SAVER_SUCCES_, NEARGYE_COUNTER), x)
-#define WITH_SAVER_SUCCESS(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_success<decltype(x)>{x})
+#define SAVER_SUCCESS(x)            NEARGYE_MAYBE_UNUSED const MAKE_SAVER_SUCCESS(NEARGYE_STR_CONCAT(SAVER_SUCCESS_, NEARGYE_COUNTER), x)
+#define WITH_SAVER_SUCCESS(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_success<decltype(x)>, x)
 
 #endif // NEARGYE_STATE_SAVER_HPP

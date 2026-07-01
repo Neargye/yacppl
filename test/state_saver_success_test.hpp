@@ -25,7 +25,7 @@
 
 #include "state_saver_test_case.hpp"
 
-CASE_TEST("state_saver_success: called on scope leave") {
+CASE_TEST("saver_success: restores on successful scope exit") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_success<decltype(a)> saver_success{a};
@@ -40,7 +40,7 @@ CASE_TEST("state_saver_success: called on scope leave") {
   REQUIRE(a.i == test_value);
 }
 
-CASE_TEST("state_saver_success: not called on error") {
+CASE_TEST("saver_success: does not restore during exception unwinding") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_success<decltype(a)> saver_success{a};
@@ -56,7 +56,7 @@ CASE_TEST("state_saver_success: not called on error") {
   REQUIRE(a.i == other_test_value);
 }
 
-CASE_TEST("state_saver_success: dismiss before scope leave") {
+CASE_TEST("saver_success: dismiss before successful scope exit") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_success<decltype(a)> saver_success{a};
@@ -72,7 +72,7 @@ CASE_TEST("state_saver_success: dismiss before scope leave") {
   REQUIRE(a.i == other_test_value);
 }
 
-CASE_TEST("state_saver_success: dismiss before error") {
+CASE_TEST("saver_success: dismiss before exception") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_success<decltype(a)> saver_success{a};
@@ -89,7 +89,7 @@ CASE_TEST("state_saver_success: dismiss before error") {
   REQUIRE(a.i == other_test_value);
 }
 
-CASE_TEST("state_saver_success: not called on error, dismiss after error") {
+CASE_TEST("saver_success: does not restore during exception before unreachable dismiss") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_success<decltype(a)> saver_success{a};
@@ -101,13 +101,38 @@ CASE_TEST("state_saver_success: not called on error, dismiss after error") {
 
   REQUIRE_THROWS([&]() {
     some_function(a);
+  }());
+
+  REQUIRE(a.i == other_test_value);
+}
+
+CASE_TEST("saver_success: with scope restores on successful scope exit") {
+  test_class a{test_value};
+
+  WITH_SAVER_SUCCESS(a) {
+    a.i = other_test_value;
+    REQUIRE(a.i == other_test_value);
+  }
+
+  REQUIRE(a.i == test_value);
+}
+
+CASE_TEST("saver_success: with scope does not restore during exception unwinding") {
+  test_class a{test_value};
+
+  REQUIRE_THROWS([&]() {
+    WITH_SAVER_SUCCESS(a) {
+      a.i = other_test_value;
+      REQUIRE(a.i == other_test_value);
+      throw std::runtime_error{"error"};
+    }
   }());
 
   REQUIRE(a.i == other_test_value);
 }
 
 #if CASE_NUMBER != 3
-CASE_TEST("state_saver_success: restore") {
+CASE_TEST("saver_success: restore") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_success<decltype(a)> saver_success{a};
@@ -129,7 +154,7 @@ CASE_TEST("state_saver_success: restore") {
   }
 }
 
-CASE_TEST("state_saver_success: dismiss, restore") {
+CASE_TEST("saver_success: dismiss then restore") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_success<decltype(a)> saver_success{a};

@@ -25,7 +25,7 @@
 
 #include "state_saver_test_case.hpp"
 
-CASE_TEST("saver_fail: not called on scope leave") {
+CASE_TEST("saver_fail: does not restore on successful scope exit") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_fail<decltype(a)> saver_fail{a};
@@ -40,7 +40,7 @@ CASE_TEST("saver_fail: not called on scope leave") {
   REQUIRE(a.i == other_test_value);
 }
 
-CASE_TEST("saver_fail: called on error") {
+CASE_TEST("saver_fail: restores during exception unwinding") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_fail<decltype(a)> saver_fail{a};
@@ -56,7 +56,7 @@ CASE_TEST("saver_fail: called on error") {
   REQUIRE(a.i == test_value);
 }
 
-CASE_TEST("saver_fail: dismiss before scope leave") {
+CASE_TEST("saver_fail: dismiss before successful scope exit") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_fail<decltype(a)> saver_fail{a};
@@ -72,7 +72,7 @@ CASE_TEST("saver_fail: dismiss before scope leave") {
   REQUIRE(a.i == other_test_value);
 }
 
-CASE_TEST("saver_fail: dismiss before error") {
+CASE_TEST("saver_fail: dismiss before exception") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_fail<decltype(a)> saver_fail{a};
@@ -89,7 +89,7 @@ CASE_TEST("saver_fail: dismiss before error") {
   REQUIRE(a.i == other_test_value);
 }
 
-CASE_TEST("saver_fail: called on error, dismiss after error") {
+CASE_TEST("saver_fail: restores during exception before unreachable dismiss") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_fail<decltype(a)> saver_fail{a};
@@ -101,6 +101,31 @@ CASE_TEST("saver_fail: called on error, dismiss after error") {
 
   REQUIRE_THROWS([&]() {
     some_function(a);
+  }());
+
+  REQUIRE(a.i == test_value);
+}
+
+CASE_TEST("saver_fail: with scope not called on success") {
+  test_class a{test_value};
+
+  WITH_SAVER_FAIL(a) {
+    a.i = other_test_value;
+    REQUIRE(a.i == other_test_value);
+  }
+
+  REQUIRE(a.i == other_test_value);
+}
+
+CASE_TEST("saver_fail: with scope restores during exception unwinding") {
+  test_class a{test_value};
+
+  REQUIRE_THROWS([&]() {
+    WITH_SAVER_FAIL(a) {
+      a.i = other_test_value;
+      REQUIRE(a.i == other_test_value);
+      throw std::runtime_error{"error"};
+    }
   }());
 
   REQUIRE(a.i == test_value);

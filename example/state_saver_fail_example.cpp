@@ -26,60 +26,60 @@
 #include <stdexcept>
 
 void foo1(int& a) {
-  SAVER_FAIL(a); // State saver on fail.
+  SAVER_FAIL(a); // Restore during exception unwinding.
 
   a = 1;
   std::cout << "foo1 a = " << a << std::endl;
   throw std::runtime_error{"error"};
-  // Original state will automatically restored, on error.
+  // The original state is restored automatically during exception unwinding.
 }
 
 void foo2(int& a) {
-  SAVER_FAIL(a); // State saver on fail.
+  SAVER_FAIL(a); // Restore only during exception unwinding.
 
   a = 2;
   std::cout << "foo2 a = " << a << std::endl;
-  // Original state will not automatically restored, on scope leave when no exceptions have been thrown.
+  // The original state is not restored when the scope exits without a new exception.
 }
 
 void foo3(int& a) {
 #if defined(__cpp_deduction_guides) && __cpp_deduction_guides >= 201611L
-  nstd::saver_fail state_saver{a}; // Custom state saver on fail, without macros.
+  nstd::saver_fail state_saver{a}; // Named failure saver, without macros.
 #else
-  nstd::saver_fail<decltype(a)> state_saver{a}; // Custom state saver on fail, without macros.
+  nstd::saver_fail<decltype(a)> state_saver{a}; // Named failure saver, without macros.
 #endif
   a = 3;
   std::cout << "foo3 a = " << a << std::endl;
   throw std::runtime_error{"error"};
-  // Original state will automatically restored, on error.
+  // The original state is restored automatically during exception unwinding.
 }
 
 void foo4(int& a) {
-  MAKE_SAVER_EXIT(state_saver, a); // Custom state saver on fail.
+  MAKE_SAVER_FAIL(state_saver, a); // Named failure saver.
 
   a = 4;
   std::cout << "foo4 a = " << a << std::endl;
 
-  state_saver.dismiss(); // Dismiss, state will not automatically restored.
+  state_saver.dismiss(); // Disable automatic restore.
   std::cout << "foo4 state_saver::dismiss" << std::endl;
   throw std::runtime_error{"error"};
-  // Original state will not automatically restored, on error.
+  // The original state is not restored during exception unwinding.
 }
 
 void foo5(int& a) {
-  MAKE_SAVER_EXIT(state_saver, a); // Custom state saver on fail.
+  MAKE_SAVER_FAIL(state_saver, a); // Named failure saver.
 
   a = 5;
   std::cout << "foo5 a = " << a << std::endl;
 
-  state_saver.dismiss(); // Dismiss, state will not automatically restored.
+  state_saver.dismiss(); // Disable automatic restore.
   std::cout << "foo5 state_saver::dismiss" << std::endl;
 
-  state_saver.restore(); // Restore state.
+  state_saver.restore(); // Restore immediately.
   std::cout << "foo5 state_saver::restore" << std::endl;
   std::cout << "foo5 a = " << a << std::endl;
   throw std::runtime_error{"error"};
-  // Original state will not automatically restored, on error.
+  // The original state is not restored during exception unwinding.
 }
 
 void foo6(int& a) {
@@ -87,7 +87,7 @@ void foo6(int& a) {
     a = 1;
     std::cout << "foo6 a = " << a << std::endl;
     throw std::runtime_error{"error"};
-    // Original state will automatically restored, on error.
+    // The original state is restored automatically during exception unwinding.
   }
 
   std::cout << "foo6 a = " << a << std::endl;
@@ -98,7 +98,7 @@ int main() {
   std::cout << "main a = " << a << std::endl;
 
   try {
-  foo1(a);
+    foo1(a);
   } catch (...) {}
   std::cout << "main a = " << a << std::endl;
 
@@ -106,22 +106,22 @@ int main() {
   std::cout << "main a = " << a << std::endl;
 
   try {
-  foo3(a);
+    foo3(a);
   } catch (...) {}
   std::cout << "main a = " << a << std::endl;
 
   try {
-  foo4(a);
+    foo4(a);
   } catch (...) {}
   std::cout << "main a = " << a << std::endl;
 
   try {
-  foo5(a);
+    foo5(a);
   } catch (...) {}
   std::cout << "main a = " << a << std::endl;
 
   try {
-  foo6(a);
+    foo6(a);
   } catch (...) {}
   std::cout << "main a = " << a << std::endl;
 

@@ -26,64 +26,64 @@
 #include <stdexcept>
 
 void foo1(int& a) {
-  SAVER_SUCCESS(a); // State saver on success.
+  SAVER_SUCCESS(a); // Restore on successful scope exit.
 
   a = 1;
   std::cout << "foo1 a = " << a << std::endl;
- // Original state will automatically restored, on scope leave when no exceptions have been thrown.
+  // The original state is restored when the scope exits without a new exception.
 }
 
 void foo2(int& a) {
-  SAVER_SUCCESS(a); // Custom state saver on success.
+  SAVER_SUCCESS(a); // Restore only on successful scope exit.
 
   a = 2;
   std::cout << "foo2 a = " << a << std::endl;
   throw std::runtime_error{"error"};
-  // Original state will not automatically restored, on error.
+  // The original state is not restored during exception unwinding.
 }
 
 void foo3(int& a) {
 #if defined(__cpp_deduction_guides) && __cpp_deduction_guides >= 201611L
-  nstd::saver_success state_saver{a}; // Custom state saver on success, without macros.
+  nstd::saver_success state_saver{a}; // Named success saver, without macros.
 #else
-  nstd::saver_success<decltype(a)> state_saver{a}; // Custom state saver on success, without macros.
+  nstd::saver_success<decltype(a)> state_saver{a}; // Named success saver, without macros.
 #endif
   a = 3;
   std::cout << "foo3 a = " << a << std::endl;
-  // Original state will automatically restored, on scope leave when no exceptions have been thrown.
+  // The original state is restored when the scope exits without a new exception.
 }
 
 void foo4(int& a) {
-  MAKE_SAVER_EXIT(state_saver, a); // Custom state saver on success.
+  MAKE_SAVER_SUCCESS(state_saver, a); // Named success saver.
 
   a = 4;
   std::cout << "foo4 a = " << a << std::endl;
 
-  state_saver.dismiss(); // Dismiss, state will not automatically restored.
+  state_saver.dismiss(); // Disable automatic restore.
   std::cout << "foo4 state_saver::dismiss" << std::endl;
-  // Original state will not automatically restored, on scope leave when no exceptions have been thrown.
+  // The original state is not restored automatically on scope exit.
 }
 
 void foo5(int& a) {
-  MAKE_SAVER_EXIT(state_saver, a); // Custom state saver on success.
+  MAKE_SAVER_SUCCESS(state_saver, a); // Named success saver.
 
   a = 5;
   std::cout << "foo5 a = " << a << std::endl;
 
-  state_saver.dismiss(); // Dismiss, state will not automatically restored.
+  state_saver.dismiss(); // Disable automatic restore.
   std::cout << "foo5 state_saver::dismiss" << std::endl;
 
-  state_saver.restore(); // Restore state.
+  state_saver.restore(); // Restore immediately.
   std::cout << "foo5 state_saver::restore" << std::endl;
   std::cout << "foo5 a = " << a << std::endl;
-  // Original state will not automatically restored, on scope leave when no exceptions have been thrown.
+  // The original state is not restored automatically on scope exit.
 }
 
 void foo6(int& a) {
   WITH_SAVER_SUCCESS(a) {
     a = 1;
     std::cout << "foo6 a = " << a << std::endl;
-    // Original state will automatically restored, on scope leave when no exceptions have been thrown.
+    // The original state is restored before control leaves this block.
   }
 
   std::cout << "foo6 a = " << a << std::endl;

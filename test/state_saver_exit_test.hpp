@@ -25,7 +25,7 @@
 
 #include "state_saver_test_case.hpp"
 
-CASE_TEST("saver_exit: called on scope leave") {
+CASE_TEST("saver_exit: restores on scope exit") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_exit<decltype(a)> saver_exit{a};
@@ -40,7 +40,7 @@ CASE_TEST("saver_exit: called on scope leave") {
   REQUIRE(a.i == test_value);
 }
 
-CASE_TEST("saver_exit: called on error") {
+CASE_TEST("saver_exit: restores during exception unwinding") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_exit<decltype(a)> saver_exit{a};
@@ -56,7 +56,7 @@ CASE_TEST("saver_exit: called on error") {
   REQUIRE(a.i == test_value);
 }
 
-CASE_TEST("saver_exit: dismiss before scope leave") {
+CASE_TEST("saver_exit: dismiss before scope exit") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_exit<decltype(a)> saver_exit{a};
@@ -72,7 +72,7 @@ CASE_TEST("saver_exit: dismiss before scope leave") {
   REQUIRE(a.i == other_test_value);
 }
 
-CASE_TEST("saver_exit: dismiss before error") {
+CASE_TEST("saver_exit: dismiss before exception") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_exit<decltype(a)> saver_exit{a};
@@ -89,7 +89,7 @@ CASE_TEST("saver_exit: dismiss before error") {
   REQUIRE(a.i == other_test_value);
 }
 
-CASE_TEST("saver_exit: called on error, dismiss after error") {
+CASE_TEST("saver_exit: restores during exception before unreachable dismiss") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {
     saver_exit<decltype(a)> saver_exit{a};
@@ -102,6 +102,33 @@ CASE_TEST("saver_exit: called on error, dismiss after error") {
   REQUIRE_THROWS([&]() {
     some_function(a);
   }());
+
+  REQUIRE(a.i == test_value);
+}
+
+CASE_TEST("saver_exit: with scope restores before break") {
+  test_class a{test_value};
+
+  WITH_SAVER_EXIT(a) {
+    a.i = other_test_value;
+    REQUIRE(a.i == other_test_value);
+    break;
+  }
+
+  REQUIRE(a.i == test_value);
+}
+
+CASE_TEST("saver_exit: with scope restores before return") {
+  test_class a{test_value};
+  const auto some_function = [](test_class& a) {
+    WITH_SAVER_EXIT(a) {
+      a.i = other_test_value;
+      REQUIRE(a.i == other_test_value);
+      return;
+    }
+  };
+
+  some_function(a);
 
   REQUIRE(a.i == test_value);
 }

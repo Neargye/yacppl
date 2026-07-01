@@ -25,6 +25,18 @@
 
 #include "state_saver_test_case.hpp"
 
+CASE_TEST("saver_success: macro restores local object on successful scope exit") {
+  test_class a{test_value};
+
+  {
+    SAVER_SUCCESS(a);
+    a.i = other_test_value;
+    REQUIRE(a.i == other_test_value);
+  }
+
+  REQUIRE(a.i == test_value);
+}
+
 CASE_TEST("saver_success: restores on successful scope exit") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {

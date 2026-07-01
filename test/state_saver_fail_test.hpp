@@ -25,6 +25,19 @@
 
 #include "state_saver_test_case.hpp"
 
+CASE_TEST("saver_fail: macro restores local object during exception unwinding") {
+  test_class a{test_value};
+
+  REQUIRE_THROWS([&]() {
+    SAVER_FAIL(a);
+    a.i = other_test_value;
+    REQUIRE(a.i == other_test_value);
+    throw std::runtime_error{"error"};
+  }());
+
+  REQUIRE(a.i == test_value);
+}
+
 CASE_TEST("saver_fail: does not restore on successful scope exit") {
   test_class a{test_value};
   const auto some_function = [](test_class& a) {

@@ -28,7 +28,7 @@
 * `ATTR_NODISCARD` - asks the compiler to warn when a return value is discarded.
 * `ATTR_NODISCARD_MSG("reason")` - same as `ATTR_NODISCARD`, with a reason on compilers that support C++20 `[[nodiscard("reason")]]`.
 * `ATTR_MAYBE_UNUSED` - suppresses unused warnings on declarations.
-* `ATTR_TRIVIAL_ABI` - requests Clang's `trivial_abi` calling convention for eligible class types; other compilers use a no-op fallback.
+* `ATTR_TRIVIAL_ABI` - requests Clang's `trivial_abi` calling convention for eligible class types. Put it after the `class` or `struct` keyword, for example `struct ATTR_TRIVIAL_ABI type`; other compilers use a no-op fallback.
 * `ATTR_NO_UNIQUE_ADDRESS` - marks a non-static data member that does not need a distinct address on compilers that support C++20 `[[no_unique_address]]`.
 
 ### Statement and expression helpers

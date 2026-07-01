@@ -244,10 +244,10 @@
 // https://devblogs.microsoft.com/cppblog/msvc-cpp20-and-the-std-cpp20-switch/#msvc-extensions-and-abi
 // https://github.com/microsoft/STL/issues/1364
 #if !defined(ATTR_NO_UNIQUE_ADDRESS)
-#  if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L) && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(no_unique_address) >= 201803L
-#    define ATTR_NO_UNIQUE_ADDRESS [[no_unique_address]]
-#  elif defined(_MSC_VER) && defined(_MSVC_LANG) && _MSVC_LANG >= 202002L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(msvc::no_unique_address)
+#  if defined(_MSC_VER) && defined(_MSVC_LANG) && _MSVC_LANG >= 202002L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(msvc::no_unique_address)
 #    define ATTR_NO_UNIQUE_ADDRESS [[msvc::no_unique_address]]
+#  elif ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L) && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(no_unique_address) >= 201803L
+#    define ATTR_NO_UNIQUE_ADDRESS [[no_unique_address]]
 #  else
 #    define ATTR_NO_UNIQUE_ADDRESS
 #  endif

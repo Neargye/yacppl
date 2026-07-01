@@ -40,7 +40,7 @@ ATTR_NODISCARD_MSG("use the computed value") int foo5() { return 42; }
 
 struct empty_type {};
 
-ATTR_TRIVIAL_ABI struct trivial_abi_type {
+struct ATTR_TRIVIAL_ABI trivial_abi_type {
   int value = 0;
 };
 

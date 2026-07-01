@@ -204,4 +204,29 @@ Optional settings:
 * `STATE_SAVER_FORCE_MOVE_ASSIGNABLE` - force destructor restore through move assignment.
 * `STATE_SAVER_FORCE_COPY_ASSIGNABLE` - force destructor restore through copy assignment.
 
+## utility
+
+`utility` provides C++17 helpers for forwarding, safe move-selection, byte-preserving casts, and applying callables to argument packs or tuple-like values.
+
+### Forwarding and move helpers
+
+* `nstd::move(x)` - move cast that rejects const objects.
+* `nstd::move_if_noexcept(x)` - move-construction helper matching `std::move_if_noexcept`, with const-object rejection.
+* `nstd::move_assign_if_noexcept(x)` - assignment-oriented equivalent that falls back to `const T&` when move assignment may throw and copy assignment is available.
+* `nstd::forward<T>(x)` - forwarding helper matching `std::forward`.
+* `nstd::forward_like<T>(x)` - C++23-style helper that applies `T`'s cv-ref qualifiers to `x`.
+* `nstd::unforward(x)` and `nstd::decay_copy(x)` - value-materialization helpers.
+
+### Invocation and conversion helpers
+
+* `nstd::bit_cast<To>(from)` - C++17 byte-preserving cast for same-size trivially copyable types. This portable implementation also requires `To` to be trivially default constructible.
+* `nstd::invoke_each(f, args...)` - invokes `f` once for each argument.
+* `nstd::apply_each(f, tuple_like)` - invokes `f` once for each element of a tuple-like object such as `std::tuple`, `std::pair`, or `std::array`.
+* `nstd::to_underlying(e)` - C++23-style enum-to-underlying conversion.
+* `nstd::cmp_equal`, `nstd::cmp_not_equal`, `nstd::cmp_less`, `nstd::cmp_greater`, `nstd::cmp_less_equal`, and `nstd::cmp_greater_equal` - C++20-style integer comparisons that handle mixed signedness without lossy casts.
+* `nstd::in_range<T>(value)` - C++20-style check that an integer value is representable by `T`.
+* `nstd::constexpr_for<Start, End, Inc>(f)` - compile-time increasing loop over integral constants. `Inc` must be positive.
+
+See [utility_example.cpp](example/utility_example.cpp) for a complete example.
+
 ## Licensed under the [MIT License](LICENSE)

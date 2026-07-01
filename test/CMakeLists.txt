@@ -75,6 +75,7 @@ endif()
 if(HAS_CPP17_FLAG)
     make_test(${CMAKE_PROJECT_NAME}-cpp17.t c++17)
     make_mode_test(${CMAKE_PROJECT_NAME}-byte.t byte_test.cpp c++17)
+    make_mode_test(${CMAKE_PROJECT_NAME}-utility.t utility_test.cpp c++17)
 endif()
 
 if(HAS_CPP20_FLAG)

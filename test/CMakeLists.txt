@@ -70,16 +70,19 @@ target_compile_definitions(${CMAKE_PROJECT_NAME}-force-move-assignable.t PRIVATE
 
 if(HAS_CPP14_FLAG)
     make_test(${CMAKE_PROJECT_NAME}-cpp14.t c++14)
+    make_mode_test(${CMAKE_PROJECT_NAME}-attributes-cpp14.t attributes_test.cpp c++14)
 endif()
 
 if(HAS_CPP17_FLAG)
     make_test(${CMAKE_PROJECT_NAME}-cpp17.t c++17)
+    make_mode_test(${CMAKE_PROJECT_NAME}-attributes-cpp17.t attributes_test.cpp c++17)
     make_mode_test(${CMAKE_PROJECT_NAME}-byte.t byte_test.cpp c++17)
     make_mode_test(${CMAKE_PROJECT_NAME}-utility.t utility_test.cpp c++17)
 endif()
 
 if(HAS_CPP20_FLAG)
     make_test(${CMAKE_PROJECT_NAME}-cpp20.t c++20)
+    make_mode_test(${CMAKE_PROJECT_NAME}-attributes-cpp20.t attributes_test.cpp c++20)
 endif()
 
 if(HAS_CPPLATEST_FLAG)

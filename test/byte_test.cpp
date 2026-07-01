@@ -10,6 +10,7 @@
 #include <array>
 #include <cstddef>
 #include <type_traits>
+#include <utility>
 
 namespace {
 
@@ -25,15 +26,26 @@ struct non_default_payload {
   explicit non_default_payload(int value) : value{value} {}
 };
 
+template <typename T, typename = void>
+struct can_shift_byte_left : std::false_type {};
+
+template <typename T>
+struct can_shift_byte_left<T, std::void_t<decltype(nstd::to_byte(1) << std::declval<T>())>> : std::true_type {};
+
 static_assert(std::is_trivially_copyable<nstd::byte>::value, "nstd::byte must be trivially copyable.");
 static_assert(sizeof(nstd::byte) == sizeof(unsigned char), "nstd::byte must have byte-sized storage.");
 static_assert(std::is_trivially_copyable<non_default_payload>::value, "non_default_payload must be trivially copyable.");
+static_assert(can_shift_byte_left<int>::value, "byte shift must accept integral counts.");
+static_assert(can_shift_byte_left<unsigned int>::value, "byte shift must accept unsigned integral counts.");
+static_assert(!can_shift_byte_left<bool>::value, "byte shift must reject bool counts.");
 static_assert(nstd::to_integer(nstd::to_byte(0x7f)) == 0x7f, "integer conversion must round-trip byte values.");
 static_assert(nstd::to_integer(nstd::to_byte(0x0f) | nstd::to_byte(0xf0)) == 0xff, "byte bitwise or must work.");
 static_assert(nstd::to_integer(nstd::to_byte(0xf0) & nstd::to_byte(0x0f)) == 0x00, "byte bitwise and must work.");
 static_assert(nstd::to_integer(nstd::to_byte(0xaa) ^ nstd::to_byte(0xff)) == 0x55, "byte bitwise xor must work.");
 static_assert(nstd::to_integer(~nstd::to_byte(0x0f)) == 0xf0, "byte bitwise not must work.");
 static_assert(nstd::to_integer(nstd::to_byte(0x01) << 3) == 0x08, "byte shift left must work on rvalues.");
+static_assert(nstd::to_integer(nstd::to_byte(0x01) << 3u) == 0x08, "byte shift left must accept unsigned counts.");
+static_assert(nstd::to_integer(nstd::to_byte(0x01) << 8) == 0x00, "byte shift must follow unsigned int shift semantics.");
 static_assert(nstd::to_integer(nstd::to_byte(0x80) >> 7) == 0x01, "byte shift right must work on rvalues.");
 
 } // namespace

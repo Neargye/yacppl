@@ -16,6 +16,8 @@
 
 * [utility](include/utility.hpp) - implementations of some utility functions, for C++17 and later.
 
+A combined [nstd_example.cpp](example/nstd_example.cpp) demonstrates several modules together.
+
 ## attributes
 
 `attributes` provides small portability macros for common compiler and standard attributes. Unsupported attributes degrade to a safe fallback.
@@ -60,10 +62,10 @@ See [unused_example.cpp](example/unused_example.cpp) for a complete example.
 * `nstd::byte` - scoped enum backed by `unsigned char`.
 * `nstd::to_byte(value)` - converts an integral value to `nstd::byte`.
 * `nstd::to_integer<T>(byte)` - converts a byte to an integral type.
-* Bitwise operators are supported: `~`, `|`, `&`, `^`, `<<`, `>>`, and their compound-assignment forms.
+* Bitwise operators are supported: `~`, `|`, `&`, `^`, `<<`, `>>`, and their compound-assignment forms. Shift counts accept integral types except `bool`; values must be non-negative and smaller than the number of value bits in `unsigned int`, and debug builds assert this precondition.
 * `nstd::to_bytes(dst, value)` and `nstd::from_bytes<T>(src)` copy a single trivially copyable object through byte storage. The return-by-value `from_bytes<T>` form also requires `T` to be default constructible.
 * `nstd::from_bytes(value, src)` copies into an existing trivially copyable object, including objects that are not default constructible.
-* `nstd::to_bytes(dst, values, count)` and `nstd::from_bytes(dst, src, count)` copy arrays of trivially copyable objects. Bounded C-style arrays also have overloads that infer the element count.
+* `nstd::to_bytes(dst, values, count)` and `nstd::from_bytes(dst, src, count)` copy arrays of trivially copyable objects. Bounded C-style arrays also have overloads that infer the element count. Debug builds assert that `count * sizeof(T)` does not overflow `std::size_t`; callers are still responsible for valid pointers and sufficiently large buffers.
 
 See [byte_example.cpp](example/byte_example.cpp) for a complete example.
 
@@ -128,8 +130,8 @@ See [concepts_example.cpp](example/concepts_example.cpp) for a complete example.
 * `nstd::void_t<T...>`.
 * `nstd::is_detected<Op, Args...>` and, when variable templates are supported, `nstd::is_detected_v<Op, Args...>`.
 * `nstd::detected_t<Op, Args...>`, `nstd::detected_or<Default, Op, Args...>`, and `nstd::detected_or_t<Default, Op, Args...>`.
-* `nstd::is_detected_exact<Expected, Op, Args...>`.
-* `nstd::is_detected_convertible<To, Op, Args...>`.
+* `nstd::is_detected_exact<Expected, Op, Args...>` and, when variable templates are supported, `nstd::is_detected_exact_v<Expected, Op, Args...>`.
+* `nstd::is_detected_convertible<To, Op, Args...>` and, when variable templates are supported, `nstd::is_detected_convertible_v<To, Op, Args...>`.
 
 ### Transformations and predicates
 
@@ -140,9 +142,9 @@ See [concepts_example.cpp](example/concepts_example.cpp) for a complete example.
 * `nstd::remove_all_ptr<T>` / `nstd::remove_all_ptr_t<T>`.
 * `nstd::remove_all_cv_ref_ptr<T>` / `nstd::remove_all_cv_ref_ptr_t<T>`.
 * `nstd::remove_all_cv_ref_ptr_ext<T>` / `nstd::remove_all_cv_ref_ptr_ext_t<T>`.
-* `nstd::conjunction<T...>`, `nstd::disjunction<T...>`, and `nstd::negation<T>`.
-* `nstd::is_same_signedness<T, U>` - true only when both types are signed or both types are unsigned.
-* `nstd::is_nothrow_convertible<From, To>` - C++11-compatible backport of `std::is_nothrow_convertible`.
+* `nstd::conjunction<T...>`, `nstd::disjunction<T...>`, and `nstd::negation<T>`, with `_v` variable-template forms when supported.
+* `nstd::is_same_signedness<T, U>` and, when variable templates are supported, `nstd::is_same_signedness_v<T, U>` - true only when both types are signed or both types are unsigned.
+* `nstd::is_nothrow_convertible<From, To>` and, when variable templates are supported, `nstd::is_nothrow_convertible_v<From, To>` - C++11-compatible backport of `std::is_nothrow_convertible`.
 
 See [type_traits_example.cpp](example/type_traits_example.cpp) for a complete example.
 

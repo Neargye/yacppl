@@ -30,13 +30,33 @@
 #ifndef NEARGYE_NSTD_BYTE_HPP
 #define NEARGYE_NSTD_BYTE_HPP
 
+#include <cassert>
 #include <cstddef>
 #include <cstring>
+#include <limits>
 #include <type_traits>
 
 namespace nstd {
 
 enum class byte : unsigned char {};
+
+namespace detail {
+
+template <typename I>
+struct is_byte_shift_count
+    : std::integral_constant<bool, std::is_integral<I>::value && !std::is_same<typename std::remove_cv<I>::type, bool>::value> {};
+
+template <typename I>
+constexpr auto is_valid_byte_shift(I shift) noexcept -> std::enable_if_t<std::is_signed<I>::value, bool> {
+  return shift >= 0 && static_cast<unsigned long long>(shift) < static_cast<unsigned long long>(std::numeric_limits<unsigned int>::digits);
+}
+
+template <typename I>
+constexpr auto is_valid_byte_shift(I shift) noexcept -> std::enable_if_t<!std::is_signed<I>::value, bool> {
+  return static_cast<unsigned long long>(shift) < static_cast<unsigned long long>(std::numeric_limits<unsigned int>::digits);
+}
+
+} // namespace detail
 
 template <typename I>
 [[nodiscard]] constexpr auto to_byte(I value) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte> {
@@ -65,13 +85,15 @@ template <typename I = unsigned char>
 }
 
 template <typename I>
-[[nodiscard]] constexpr auto operator<<(byte b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte> {
-  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(b) << shift));
+[[nodiscard]] constexpr auto operator<<(byte b, I shift) noexcept -> std::enable_if_t<detail::is_byte_shift_count<I>::value, byte> {
+  assert(detail::is_valid_byte_shift(shift) && "nstd::byte shift out of range");
+  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(b) << static_cast<unsigned int>(shift)));
 }
 
 template <typename I>
-[[nodiscard]] constexpr auto operator>>(byte b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte> {
-  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(b) >> shift));
+[[nodiscard]] constexpr auto operator>>(byte b, I shift) noexcept -> std::enable_if_t<detail::is_byte_shift_count<I>::value, byte> {
+  assert(detail::is_valid_byte_shift(shift) && "nstd::byte shift out of range");
+  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(b) >> static_cast<unsigned int>(shift)));
 }
 
 constexpr byte& operator|=(byte& lhs, byte rhs) noexcept {
@@ -87,12 +109,12 @@ constexpr byte& operator^=(byte& lhs, byte rhs) noexcept {
 }
 
 template <typename I>
-constexpr auto operator<<=(byte& b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte&> {
+constexpr auto operator<<=(byte& b, I shift) noexcept -> std::enable_if_t<detail::is_byte_shift_count<I>::value, byte&> {
   return b = b << shift;
 }
 
 template <typename I>
-constexpr auto operator>>=(byte& b, I shift) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte&> {
+constexpr auto operator>>=(byte& b, I shift) noexcept -> std::enable_if_t<detail::is_byte_shift_count<I>::value, byte&> {
   return b = b >> shift;
 }
 
@@ -107,6 +129,7 @@ template <typename T>
 auto to_bytes(byte* dst, const T* src, std::size_t count) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
   static_assert(std::is_trivially_copyable_v<byte>, "nstd::to_bytes requires byte is trivially copyable.");
   static_assert(std::is_trivially_copyable_v<T>,    "nstd::to_bytes requires T is trivially copyable.");
+  assert(count <= std::numeric_limits<std::size_t>::max() / sizeof(T) && "nstd::to_bytes count overflow");
   static_cast<void>(std::memcpy(dst, src, count * sizeof(T)));
 }
 
@@ -136,6 +159,7 @@ template <typename T>
 auto from_bytes(T* dst, const byte* src, std::size_t count) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
   static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
   static_assert(std::is_trivially_copyable_v<T>,    "nstd::from_bytes requires T is trivially copyable.");
+  assert(count <= std::numeric_limits<std::size_t>::max() / sizeof(T) && "nstd::from_bytes count overflow");
   static_cast<void>(std::memcpy(dst, src, count * sizeof(T)));
 }
 

@@ -27,8 +27,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef NEARGYE_STATE_SAVER_HPP
-#define NEARGYE_STATE_SAVER_HPP
+#ifndef NEARGYE_NSTD_STATE_SAVER_HPP
+#define NEARGYE_NSTD_STATE_SAVER_HPP
 
 // state_saver saves an object's current value and restores it later.
 // * saver_exit - restores on scope exit.
@@ -326,4 +326,4 @@ saver_success(U&) -> saver_success<U>;
 #define SAVER_SUCCESS(x)            NEARGYE_STATE_SAVER_MAYBE_UNUSED const MAKE_SAVER_SUCCESS(NEARGYE_STATE_SAVER_STR_CONCAT(SAVER_SUCCESS_, NEARGYE_STATE_SAVER_COUNTER), x)
 #define WITH_SAVER_SUCCESS(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_success<decltype(x)>, x)
 
-#endif // NEARGYE_STATE_SAVER_HPP
+#endif // NEARGYE_NSTD_STATE_SAVER_HPP

@@ -48,9 +48,15 @@
 #  define NEARGYE_ATTR_HAS_BUILTIN_DEFINED
 #endif
 
+#if defined(_MSVC_LANG)
+#  define NEARGYE_ATTR_CPLUSPLUS _MSVC_LANG
+#else
+#  define NEARGYE_ATTR_CPLUSPLUS __cplusplus
+#endif
+
 // ATTR_NORETURN indicates that the function does not return.
 #if !defined(ATTR_NORETURN)
-#  if NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(noreturn)
+#  if NEARGYE_ATTR_CPLUSPLUS >= 201103L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(noreturn)
 #    define ATTR_NORETURN [[noreturn]]
 #  elif defined(__clang__) || defined(__GNUC__)
 #    define ATTR_NORETURN __attribute__((__noreturn__))
@@ -63,7 +69,7 @@
 
 // ATTR_DEPRECATED indicates that the use of the name or entity declared with this attribute is allowed, but discouraged for some reason.
 #if !defined(ATTR_DEPRECATED)
-#  if NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(deprecated)
+#  if NEARGYE_ATTR_CPLUSPLUS >= 201402L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(deprecated)
 #    define ATTR_DEPRECATED(MSG) [[deprecated(MSG)]]
 #  elif defined(__clang__) || defined(__GNUC__)
 #    define ATTR_DEPRECATED(MSG) __attribute__((__deprecated__(MSG)))
@@ -87,11 +93,11 @@
 
 // ATTR_FALLTHROUGH indicates that the fall through from the previous case label is intentional and should not be diagnosed by a compiler that warns on fall-through.
 #if !defined(ATTR_FALLTHROUGH)
-#  if NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(fallthrough)
+#  if NEARGYE_ATTR_CPLUSPLUS >= 201703L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(fallthrough)
 #    define ATTR_FALLTHROUGH [[fallthrough]];
-#  elif defined(__clang__) && __cplusplus >= 201103L
+#  elif defined(__clang__) && NEARGYE_ATTR_CPLUSPLUS >= 201103L
 #    define ATTR_FALLTHROUGH [[clang::fallthrough]];
-#  elif defined(__GNUC__) && __GNUC__ >= 7 && __cplusplus >= 201103L
+#  elif defined(__GNUC__) && __GNUC__ >= 7 && NEARGYE_ATTR_CPLUSPLUS >= 201103L
 #    define ATTR_FALLTHROUGH [[gnu::fallthrough]];
 #  else
 #    define ATTR_FALLTHROUGH /*fallthrough*/
@@ -100,7 +106,7 @@
 
 // ATTR_ASSUME gives the optimizer an assumption about an expression. If the expression is false, behavior is undefined on supporting compilers.
 #if !defined(ATTR_ASSUME)
-#  if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202302L) || __cplusplus >= 202302L) && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(assume)
+#  if NEARGYE_ATTR_CPLUSPLUS >= 202302L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(assume)
 #    define ATTR_ASSUME(EXPR) [[assume(EXPR)]]
 #  elif defined(_MSC_VER)
 #    define ATTR_ASSUME(EXPR) __assume(EXPR)
@@ -113,7 +119,7 @@
 
 // ATTR_NODISCARD encourages the compiler to issue a warning if the return value is discarded.
 #if !defined(ATTR_NODISCARD)
-#  if NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(nodiscard)
+#  if NEARGYE_ATTR_CPLUSPLUS >= 201703L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(nodiscard)
 #    define ATTR_NODISCARD [[nodiscard]]
 #  elif defined(__clang__) || defined(__GNUC__)
 #    define ATTR_NODISCARD __attribute__((__warn_unused_result__))
@@ -126,7 +132,7 @@
 
 // ATTR_NODISCARD_MSG encourages the compiler to issue a warning with a reason if the return value is discarded.
 #if !defined(ATTR_NODISCARD_MSG)
-#  if ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L) && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(nodiscard) >= 201907L
+#  if NEARGYE_ATTR_CPLUSPLUS >= 202002L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(nodiscard) >= 201907L
 #    define ATTR_NODISCARD_MSG(MSG) [[nodiscard(MSG)]]
 #  else
 #    define ATTR_NODISCARD_MSG(MSG) ATTR_NODISCARD
@@ -135,7 +141,7 @@
 
 // ATTR_MAYBE_UNUSED suppresses compiler warnings on unused entities, if any.
 #if !defined(ATTR_MAYBE_UNUSED)
-#  if NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(maybe_unused)
+#  if NEARGYE_ATTR_CPLUSPLUS >= 201703L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(maybe_unused)
 #    define ATTR_MAYBE_UNUSED [[maybe_unused]]
 #  elif defined(__clang__) || defined(__GNUC__)
 #    define ATTR_MAYBE_UNUSED __attribute__((__unused__))
@@ -196,5 +202,7 @@
 #  undef NEARGYE_ATTR_HAS_BUILTIN
 #  undef NEARGYE_ATTR_HAS_BUILTIN_DEFINED
 #endif
+
+#undef NEARGYE_ATTR_CPLUSPLUS
 
 #endif // NEARGYE_NSTD_ATTRIBUTES_HPP

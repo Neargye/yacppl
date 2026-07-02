@@ -122,6 +122,7 @@ template <typename T>
 auto to_bytes(byte* dst, const T& src) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
   static_assert(std::is_trivially_copyable_v<byte>, "nstd::to_bytes requires byte is trivially copyable.");
   static_assert(std::is_trivially_copyable_v<T>,    "nstd::to_bytes requires T is trivially copyable.");
+  assert(dst != nullptr && "nstd::to_bytes requires dst is not null");
   static_cast<void>(std::memcpy(dst, &src, sizeof(T)));
 }
 
@@ -129,6 +130,8 @@ template <typename T>
 auto to_bytes(byte* dst, const T* src, std::size_t count) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
   static_assert(std::is_trivially_copyable_v<byte>, "nstd::to_bytes requires byte is trivially copyable.");
   static_assert(std::is_trivially_copyable_v<T>,    "nstd::to_bytes requires T is trivially copyable.");
+  assert(dst != nullptr && "nstd::to_bytes requires dst is not null");
+  assert(src != nullptr && "nstd::to_bytes requires src is not null");
   assert(count <= std::numeric_limits<std::size_t>::max() / sizeof(T) && "nstd::to_bytes count overflow");
   static_cast<void>(std::memcpy(dst, src, count * sizeof(T)));
 }
@@ -143,6 +146,7 @@ template <typename T>
   static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
   static_assert(std::is_trivially_copyable_v<T>,    "nstd::from_bytes requires T is trivially copyable.");
   static_assert(std::is_default_constructible_v<T>, "nstd::from_bytes requires T is default constructible.");
+  assert(src != nullptr && "nstd::from_bytes requires src is not null");
   T dst;
   static_cast<void>(std::memcpy(&dst, src, sizeof(T)));
   return dst;
@@ -152,6 +156,7 @@ template <typename T>
 auto from_bytes(T& dst, const byte* src) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
   static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
   static_assert(std::is_trivially_copyable_v<T>,    "nstd::from_bytes requires T is trivially copyable.");
+  assert(src != nullptr && "nstd::from_bytes requires src is not null");
   static_cast<void>(std::memcpy(&dst, src, sizeof(T)));
 }
 
@@ -159,6 +164,8 @@ template <typename T>
 auto from_bytes(T* dst, const byte* src, std::size_t count) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
   static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
   static_assert(std::is_trivially_copyable_v<T>,    "nstd::from_bytes requires T is trivially copyable.");
+  assert(dst != nullptr && "nstd::from_bytes requires dst is not null");
+  assert(src != nullptr && "nstd::from_bytes requires src is not null");
   assert(count <= std::numeric_limits<std::size_t>::max() / sizeof(T) && "nstd::from_bytes count overflow");
   static_cast<void>(std::memcpy(dst, src, count * sizeof(T)));
 }

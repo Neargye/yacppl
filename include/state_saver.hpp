@@ -89,11 +89,7 @@ namespace detail {
 #  define NEARGYE_STATE_SAVER_CATCH
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER < 1900
-inline int uncaught_exceptions() noexcept {
-  return *(reinterpret_cast<int*>(static_cast<char*>(static_cast<void*>(_getptd())) + (sizeof(void*) == 8 ? 0x100 : 0x90)));
-}
-#elif (defined(__clang__) || defined(__GNUC__)) && __cplusplus < 201700L
+#if (defined(__clang__) || defined(__GNUC__)) && __cplusplus < 201700L
 struct __cxa_eh_globals;
 extern "C" __cxa_eh_globals* __cxa_get_globals() noexcept;
 inline int uncaught_exceptions() noexcept {

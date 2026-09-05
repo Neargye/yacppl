@@ -130,7 +130,7 @@
 #  endif
 #endif
 
-// ATTR_NODISCARD_MSG encourages the compiler to issue a warning with a reason if the return value is discarded.
+// ATTR_NODISCARD_MSG adds a diagnostic reason when supported.
 #if !defined(ATTR_NODISCARD_MSG)
 #  if NEARGYE_ATTR_CPLUSPLUS >= 202002L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(nodiscard) >= 201907L
 #    define ATTR_NODISCARD_MSG(MSG) [[nodiscard(MSG)]]
@@ -152,34 +152,34 @@
 #  endif
 #endif
 
-// ATTR_LIKELY indicates that the compiler should optimize for the case where a path of execution through a statement is more or less likely than any other path of execution.
+// ATTR_LIKELY hints that the expression is true.
 #if !defined(ATTR_LIKELY)
 #  if defined(__clang__) || defined(__GNUC__)
-#    define ATTR_LIKELY(x) __builtin_expect(!!(x), 1)
+#    define ATTR_LIKELY(x) __builtin_expect(static_cast<bool>(x), 1)
 #  else
-#    define ATTR_LIKELY(x) (!!(x))
+#    define ATTR_LIKELY(x) (static_cast<bool>(x))
 #  endif
 #endif
 
-// ATTR_UNLIKELY indicates that the compiler should optimize for the case where a path of execution through a statement is more or less likely than any other path of execution.
+// ATTR_UNLIKELY hints that the expression is false.
 #if !defined(ATTR_UNLIKELY)
 #  if defined(__clang__) || defined(__GNUC__)
-#    define ATTR_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#    define ATTR_UNLIKELY(x) __builtin_expect(static_cast<bool>(x), 0)
 #  else
-#    define ATTR_UNLIKELY(x) (!!(x))
+#    define ATTR_UNLIKELY(x) (static_cast<bool>(x))
 #  endif
 #endif
 
 // ATTR_TRIVIAL_ABI requests Clang's trivial_abi calling convention for eligible class types.
 #if !defined(ATTR_TRIVIAL_ABI)
-#  if defined(__clang__) && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(clang::trivial_abi)
+#  if defined(__clang__) && NEARGYE_ATTR_CPLUSPLUS >= 201103L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(clang::trivial_abi)
 #    define ATTR_TRIVIAL_ABI [[clang::trivial_abi]]
 #  else
 #    define ATTR_TRIVIAL_ABI
 #  endif
 #endif
 
-// ATTR_NO_UNIQUE_ADDRESS indicates that a non-static data member need not have an address distinct from other non-static data members.
+// ATTR_NO_UNIQUE_ADDRESS allows member storage to overlap with other members or base classes.
 // MSVC uses a vendor spelling for the ABI-affecting implementation.
 // https://devblogs.microsoft.com/cppblog/msvc-cpp20-and-the-std-cpp20-switch/#msvc-extensions-and-abi
 // https://github.com/microsoft/STL/issues/1364

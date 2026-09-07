@@ -1,5 +1,23 @@
 ﻿include(CheckCXXCompilerFlag)
 
+# Check the intended diagnostic, with a positive control for toolchain failures.
+try_compile(HAS_NOTHROW_DESTRUCTOR_GUARD
+    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/state_saver_destructor_compile_test.cpp
+    CXX_STANDARD 11
+    OUTPUT_VARIABLE DESTRUCTOR_CHECK_OUTPUT)
+if(NOT HAS_NOTHROW_DESTRUCTOR_GUARD)
+    message(FATAL_ERROR "state_saver positive compile check failed: ${DESTRUCTOR_CHECK_OUTPUT}")
+endif()
+
+try_compile(HAS_THROWING_DESTRUCTOR_GUARD
+    SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/state_saver_destructor_compile_test.cpp
+    CXX_STANDARD 11
+    COMPILE_DEFINITIONS -DTEST_THROWING_DESTRUCTOR
+    OUTPUT_VARIABLE DESTRUCTOR_CHECK_OUTPUT)
+if(HAS_THROWING_DESTRUCTOR_GUARD OR NOT DESTRUCTOR_CHECK_OUTPUT MATCHES "state_saver requires nothrow destructible type")
+    message(FATAL_ERROR "state_saver must reject throwing destructors: ${DESTRUCTOR_CHECK_OUTPUT}")
+endif()
+
 set(SOURCES state_saver_test.cpp)
 
 if(MSVC)
@@ -81,15 +99,24 @@ make_mode_test(${PROJECT_NAME}-attributes.t attributes_test.cpp "${CPP11_FLAG}")
 make_mode_test(${PROJECT_NAME}-concepts.t concepts_test.cpp "${CPP11_FLAG}")
 make_mode_test(${PROJECT_NAME}-type-traits.t type_traits_test.cpp "${CPP11_FLAG}")
 make_mode_test(${PROJECT_NAME}-unused.t unused_test.cpp "${CPP11_FLAG}")
-make_mode_test(${PROJECT_NAME}-suppress-throw-restore.t state_saver_suppress_throw_restore_test.cpp "${CPP11_FLAG}")
-make_mode_test(${PROJECT_NAME}-no-throw-restore.t state_saver_no_throw_restore_test.cpp "${CPP11_FLAG}")
-make_mode_test(${PROJECT_NAME}-force-copy-assignable.t state_saver_force_assignable_test.cpp "${CPP11_FLAG}")
-target_compile_definitions(${PROJECT_NAME}-force-copy-assignable.t PRIVATE STATE_SAVER_FORCE_COPY_ASSIGNABLE)
-make_mode_test(${PROJECT_NAME}-force-move-assignable.t state_saver_force_assignable_test.cpp "${CPP11_FLAG}")
-target_compile_definitions(${PROJECT_NAME}-force-move-assignable.t PRIVATE STATE_SAVER_FORCE_MOVE_ASSIGNABLE)
+make_mode_test(${PROJECT_NAME}-suppress-throw-restore.t state_saver_config_test.cpp "${CPP11_FLAG}")
+target_compile_definitions(${PROJECT_NAME}-suppress-throw-restore.t PRIVATE STATE_SAVER_TEST_SUPPRESS_THROW_RESTORE)
+make_mode_test(${PROJECT_NAME}-no-throw-restore.t state_saver_config_test.cpp "${CPP11_FLAG}")
+target_compile_definitions(${PROJECT_NAME}-no-throw-restore.t PRIVATE STATE_SAVER_TEST_NO_THROW_RESTORE)
+make_mode_test(${PROJECT_NAME}-no-throw-constructible.t state_saver_config_test.cpp "${CPP11_FLAG}")
+target_compile_definitions(${PROJECT_NAME}-no-throw-constructible.t PRIVATE STATE_SAVER_TEST_NO_THROW_CONSTRUCTIBLE)
+make_mode_test(${PROJECT_NAME}-terminate-restore.t state_saver_config_test.cpp "${CPP11_FLAG}")
+target_compile_definitions(${PROJECT_NAME}-terminate-restore.t PRIVATE STATE_SAVER_TEST_TERMINATE_RESTORE)
+make_mode_test(${PROJECT_NAME}-throwing-handler.t state_saver_config_test.cpp "${CPP11_FLAG}")
+target_compile_definitions(${PROJECT_NAME}-throwing-handler.t PRIVATE STATE_SAVER_TEST_THROWING_HANDLER)
+make_mode_test(${PROJECT_NAME}-force-copy-assignable.t state_saver_config_test.cpp "${CPP11_FLAG}")
+target_compile_definitions(${PROJECT_NAME}-force-copy-assignable.t PRIVATE STATE_SAVER_TEST_FORCE_COPY_ASSIGNABLE)
+make_mode_test(${PROJECT_NAME}-force-move-assignable.t state_saver_config_test.cpp "${CPP11_FLAG}")
+target_compile_definitions(${PROJECT_NAME}-force-move-assignable.t PRIVATE STATE_SAVER_TEST_FORCE_MOVE_ASSIGNABLE)
 
 if(HAS_CPP14_FLAG)
     make_test(${PROJECT_NAME}-cpp14.t c++14)
+    target_compile_definitions(${PROJECT_NAME}-cpp14.t PRIVATE STATE_SAVER_TEST_CXXABI_FIRST)
     make_mode_test(${PROJECT_NAME}-attributes-cpp14.t attributes_test.cpp c++14)
 endif()
 

@@ -32,33 +32,41 @@
 
 // state_saver saves an object's current value and restores it later.
 // * saver_exit - restores on scope exit.
-// * saver_fail - restores on scope exit when an exception is being unwound.
+// * saver_fail - restores on scope exit when a new exception is being unwound.
 // * saver_success - restores on scope exit when no new exception is being unwound.
 
-// Interface of state_saver:
-// * constructor state_saver(T& object) - saves the current object value.
+// Interface:
+// * state_saver(T& object) - saves the current object value.
 // * dismiss() - disables automatic restore on scope exit.
-// * restore() - restores the saved value immediately. Requires copy assignment.
+// * restore() - restores the saved value immediately. Requires lvalue assignment.
 
-// Requirements for the saved object:
+// Requirements:
 // * Object semantics (non-const, non-pointer, non-array, non-function).
-// * Copy constructor.
-// * Assignment operator selected by the configured/default restore policy.
+// * Constructible from a non-const lvalue.
+// * Nothrow destructible.
+// * Assignment operator selected by the restore policy.
 
-// Throwable settings:
-// STATE_SAVER_NO_THROW_CONSTRUCTIBLE requires nothrow value copy construction.
+// Define settings before including this header and use the same values in every translation unit.
+
+// Restore settings:
+// STATE_SAVER_NO_THROW_CONSTRUCTIBLE requires nothrow snapshot construction.
 // STATE_SAVER_MAY_THROW_RESTORE allows restore to throw exceptions.
 // STATE_SAVER_NO_THROW_RESTORE requires noexcept restore.
 // STATE_SAVER_SUPPRESS_THROW_RESTORE suppresses exceptions thrown during restore.
-// STATE_SAVER_CATCH_HANDLER runs from the suppression catch block. It is used only with STATE_SAVER_SUPPRESS_THROW_RESTORE.
+// STATE_SAVER_CATCH_HANDLER handles suppressed restore exceptions and must not throw.
 
-// Assignable settings:
-// STATE_SAVER_FORCE_MOVE_ASSIGNABLE restores on scope exit through move assignment.
-// STATE_SAVER_FORCE_COPY_ASSIGNABLE restores on scope exit through copy assignment.
+// Assignment settings:
+// STATE_SAVER_FORCE_MOVE_ASSIGNABLE uses rvalue assignment on scope exit.
+// STATE_SAVER_FORCE_COPY_ASSIGNABLE uses lvalue assignment on scope exit.
 
-#include <type_traits>
-#if (defined(_MSC_VER) && _MSC_VER >= 1900) || ((defined(__clang__) || defined(__GNUC__)) && __cplusplus >= 201700L)
 #include <exception>
+#include <type_traits>
+
+#if !defined(_MSC_VER) && __cplusplus < 201703L && defined(__GXX_ABI_VERSION) && (defined(__clang__) || defined(__GNUC__))
+namespace __cxxabiv1 {
+struct __cxa_eh_globals;
+extern "C" __cxa_eh_globals* __cxa_get_globals() noexcept;
+} // namespace __cxxabiv1
 #endif
 
 #if !defined(STATE_SAVER_MAY_THROW_RESTORE) && !defined(STATE_SAVER_NO_THROW_RESTORE) && !defined(STATE_SAVER_SUPPRESS_THROW_RESTORE)
@@ -89,16 +97,16 @@ namespace detail {
 #  define NEARGYE_STATE_SAVER_CATCH
 #endif
 
-#if (defined(__clang__) || defined(__GNUC__)) && __cplusplus < 201700L
-struct __cxa_eh_globals;
-extern "C" __cxa_eh_globals* __cxa_get_globals() noexcept;
-inline int uncaught_exceptions() noexcept {
-  return static_cast<int>(*(reinterpret_cast<unsigned int*>(static_cast<char*>(static_cast<void*>(__cxa_get_globals())) + sizeof(void*))));
-}
-#else
+#if (defined(_MSC_VER) && _MSC_VER >= 1900) || __cplusplus >= 201703L
 inline int uncaught_exceptions() noexcept {
   return std::uncaught_exceptions();
 }
+#elif defined(__GXX_ABI_VERSION) && (defined(__clang__) || defined(__GNUC__))
+inline int uncaught_exceptions() noexcept {
+  return static_cast<int>(*reinterpret_cast<const unsigned int*>(reinterpret_cast<const char*>(::__cxxabiv1::__cxa_get_globals()) + sizeof(void*)));
+}
+#else
+#  error state_saver requires std::uncaught_exceptions() or a GCC-compatible Itanium C++ ABI.
 #endif
 
 class on_exit_policy {
@@ -154,11 +162,15 @@ class state_saver {
 #elif defined(STATE_SAVER_FORCE_COPY_ASSIGNABLE)
   using assignable_t = T&;
 #else
-  using assignable_t = typename std::conditional<
-      std::is_nothrow_assignable<T&, T&&>::value ||
-          !std::is_assignable<T&, T&>::value ||
-          (!std::is_nothrow_assignable<T&, T&>::value && std::is_assignable<T&, T&&>::value),
-      T&&, T&>::type;
+  using assignable_t = typename std::conditional<!std::is_nothrow_assignable<T&, T&&>::value && std::is_assignable<T&, T&>::value, T&, T&&>::type;
+#endif
+
+#if defined(STATE_SAVER_NO_THROW_RESTORE)
+  template <typename O>
+  using is_restore_assignable = std::integral_constant<bool, std::is_same<T, O>::value && std::is_nothrow_assignable<O&, O&>::value>;
+#else
+  template <typename O>
+  using is_restore_assignable = std::integral_constant<bool, std::is_same<T, O>::value && std::is_assignable<O&, O&>::value>;
 #endif
 
   static_assert(!std::is_const<T>::value,
@@ -172,7 +184,9 @@ class state_saver {
   static_assert(!std::is_function<T>::value,
                 "state_saver requires not function type.");
   static_assert(std::is_constructible<T, T&>::value,
-                "state_saver requires copy constructible.");
+                "state_saver requires constructible from an lvalue.");
+  static_assert(std::is_nothrow_destructible<T>::value,
+                "state_saver requires nothrow destructible type.");
   static_assert(std::is_assignable<T&, assignable_t>::value,
                 "state_saver requires operator=.");
   static_assert(std::is_same<P, on_exit_policy>::value || std::is_same<P, on_fail_policy>::value || std::is_same<P, on_success_policy>::value,
@@ -183,7 +197,7 @@ class state_saver {
 #endif
 #if defined(STATE_SAVER_NO_THROW_CONSTRUCTIBLE)
   static_assert(std::is_nothrow_constructible<T, T&>::value,
-                "state_saver requires nothrow constructible.");
+                "state_saver requires nothrow constructible from an lvalue.");
 #endif
 
   P policy_;
@@ -201,20 +215,14 @@ class state_saver {
   state_saver(const T&) = delete;
 
   explicit state_saver(T& object) noexcept(std::is_nothrow_constructible<T, T&>::value)
-      : policy_{true},
-        previous_ref_{object},
-        previous_value_{object} {}
+      : policy_{true}, previous_ref_{object}, previous_value_(object) {}
 
   void dismiss() noexcept {
     policy_.dismiss();
   }
 
   template <typename O = T>
-  auto restore() NEARGYE_STATE_SAVER_NOEXCEPT(std::is_nothrow_assignable<O&, O&>::value) -> typename std::enable_if<std::is_same<T, O>::value && std::is_assignable<O&, O&>::value>::type {
-    static_assert(std::is_assignable<O&, O&>::value, "state_saver::restore requires copy operator=.");
-#if defined(STATE_SAVER_NO_THROW_RESTORE)
-    static_assert(std::is_nothrow_assignable<O&, O&>::value, "state_saver::restore requires noexcept copy operator=.");
-#endif
+  auto restore() NEARGYE_STATE_SAVER_NOEXCEPT(std::is_nothrow_assignable<O&, O&>::value) -> typename std::enable_if<is_restore_assignable<O>::value>::type {
     NEARGYE_STATE_SAVER_TRY
       previous_ref_ = previous_value_;
     NEARGYE_STATE_SAVER_CATCH

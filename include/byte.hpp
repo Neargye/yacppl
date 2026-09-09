@@ -34,6 +34,7 @@
 #include <cstddef>
 #include <cstring>
 #include <limits>
+#include <memory>
 #include <type_traits>
 
 namespace nstd {
@@ -43,20 +44,37 @@ enum class byte : unsigned char {};
 namespace detail {
 
 template <typename I>
-struct is_byte_shift_count
-    : std::integral_constant<bool, std::is_integral<I>::value && !std::is_same<typename std::remove_cv<I>::type, bool>::value> {};
+using is_byte_shift_count = std::bool_constant<std::is_integral_v<I> && !std::is_same_v<std::remove_cv_t<I>, bool>>;
 
 template <typename I>
-constexpr auto is_valid_byte_shift(I shift) noexcept -> std::enable_if_t<std::is_signed<I>::value, bool> {
-  return shift >= 0 && static_cast<unsigned long long>(shift) < static_cast<unsigned long long>(std::numeric_limits<unsigned int>::digits);
-}
-
-template <typename I>
-constexpr auto is_valid_byte_shift(I shift) noexcept -> std::enable_if_t<!std::is_signed<I>::value, bool> {
+constexpr bool is_valid_byte_shift(I shift) noexcept {
+  if constexpr (std::is_signed_v<I>) {
+    if (shift < 0) {
+      return false;
+    }
+  }
   return static_cast<unsigned long long>(shift) < static_cast<unsigned long long>(std::numeric_limits<unsigned int>::digits);
 }
 
-} // namespace detail
+template <typename T>
+using enable_if_byte_source_t = std::enable_if_t<std::is_trivially_copyable_v<T> && !std::is_volatile_v<T>>;
+
+template <typename T>
+using enable_if_byte_destination_t = std::enable_if_t<std::is_trivially_copyable_v<T> && !std::is_const_v<T> && !std::is_volatile_v<T>>;
+
+template <typename T>
+constexpr bool is_valid_byte_count(std::size_t count) noexcept {
+  return count <= (std::numeric_limits<std::size_t>::max)() / sizeof(T);
+}
+
+template <typename T>
+using byte_return_source_t = std::conditional_t<std::is_trivially_copy_constructible_v<T>, const T&, T&&>;
+
+template <typename T>
+using enable_if_byte_return_t = std::enable_if_t<std::is_trivially_copyable_v<T> && !std::is_const_v<T> && !std::is_volatile_v<T> &&
+                                                std::is_default_constructible_v<T> && std::is_trivially_constructible_v<T, byte_return_source_t<T>>, T>;
+
+} // namespace nstd::detail
 
 template <typename I>
 [[nodiscard]] constexpr auto to_byte(I value) noexcept -> std::enable_if_t<std::is_integral_v<I>, byte> {
@@ -118,61 +136,75 @@ constexpr auto operator>>=(byte& b, I shift) noexcept -> std::enable_if_t<detail
   return b = b >> shift;
 }
 
+// Copy object representations without validating data or buffer sizes.
 template <typename T>
-auto to_bytes(byte* dst, const T& src) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
-  static_assert(std::is_trivially_copyable_v<byte>, "nstd::to_bytes requires byte is trivially copyable.");
-  static_assert(std::is_trivially_copyable_v<T>,    "nstd::to_bytes requires T is trivially copyable.");
+auto to_bytes(byte* dst, const T& src) noexcept -> detail::enable_if_byte_source_t<T> {
   assert(dst != nullptr && "nstd::to_bytes requires dst is not null");
-  static_cast<void>(std::memcpy(dst, &src, sizeof(T)));
+  if (dst != nullptr) {
+    static_cast<void>(std::memmove(dst, std::addressof(src), sizeof(T)));
+  }
 }
 
 template <typename T>
-auto to_bytes(byte* dst, const T* src, std::size_t count) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
-  static_assert(std::is_trivially_copyable_v<byte>, "nstd::to_bytes requires byte is trivially copyable.");
-  static_assert(std::is_trivially_copyable_v<T>,    "nstd::to_bytes requires T is trivially copyable.");
+auto to_bytes(byte* dst, const T* src, std::size_t count) noexcept -> detail::enable_if_byte_source_t<T> {
+  if (count == 0) {
+    return;
+  }
+  const bool valid_count = detail::is_valid_byte_count<T>(count);
+  assert(valid_count && "nstd::to_bytes count overflow");
+  if (!valid_count) {
+    return;
+  }
   assert(dst != nullptr && "nstd::to_bytes requires dst is not null");
   assert(src != nullptr && "nstd::to_bytes requires src is not null");
-  assert(count <= std::numeric_limits<std::size_t>::max() / sizeof(T) && "nstd::to_bytes count overflow");
-  static_cast<void>(std::memcpy(dst, src, count * sizeof(T)));
+  if (dst != nullptr && src != nullptr) {
+    static_cast<void>(std::memmove(dst, src, count * sizeof(T)));
+  }
 }
 
 template <typename T, std::size_t N>
-auto to_bytes(byte* dst, const T (&src)[N]) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
-  return to_bytes(dst, src, N);
+auto to_bytes(byte* dst, const T (&src)[N]) noexcept -> detail::enable_if_byte_source_t<T> {
+  return ::nstd::to_bytes(dst, src, N);
 }
 
 template <typename T>
-[[nodiscard]] auto from_bytes(const byte* src) noexcept(std::is_nothrow_default_constructible_v<T>) -> std::enable_if_t<std::is_trivially_copyable_v<T> && std::is_default_constructible_v<T>, T> {
-  static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
-  static_assert(std::is_trivially_copyable_v<T>,    "nstd::from_bytes requires T is trivially copyable.");
-  static_assert(std::is_default_constructible_v<T>, "nstd::from_bytes requires T is default constructible.");
+[[nodiscard]] auto from_bytes(const byte* src) noexcept(std::is_nothrow_default_constructible_v<T> && std::is_nothrow_constructible_v<T, detail::byte_return_source_t<T>>) -> detail::enable_if_byte_return_t<T> {
   assert(src != nullptr && "nstd::from_bytes requires src is not null");
-  T dst;
-  static_cast<void>(std::memcpy(&dst, src, sizeof(T)));
-  return dst;
+  T dst{};
+  if (src != nullptr) {
+    static_cast<void>(std::memcpy(static_cast<void*>(std::addressof(dst)), src, sizeof(T)));
+  }
+  return T(static_cast<detail::byte_return_source_t<T>>(dst));
 }
 
 template <typename T>
-auto from_bytes(T& dst, const byte* src) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
-  static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
-  static_assert(std::is_trivially_copyable_v<T>,    "nstd::from_bytes requires T is trivially copyable.");
+auto from_bytes(T& dst, const byte* src) noexcept -> detail::enable_if_byte_destination_t<T> {
   assert(src != nullptr && "nstd::from_bytes requires src is not null");
-  static_cast<void>(std::memcpy(&dst, src, sizeof(T)));
+  if (src != nullptr) {
+    static_cast<void>(std::memmove(static_cast<void*>(std::addressof(dst)), src, sizeof(T)));
+  }
 }
 
 template <typename T>
-auto from_bytes(T* dst, const byte* src, std::size_t count) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
-  static_assert(std::is_trivially_copyable_v<byte>, "nstd::from_bytes requires byte is trivially copyable.");
-  static_assert(std::is_trivially_copyable_v<T>,    "nstd::from_bytes requires T is trivially copyable.");
+auto from_bytes(T* dst, const byte* src, std::size_t count) noexcept -> detail::enable_if_byte_destination_t<T> {
+  if (count == 0) {
+    return;
+  }
+  const bool valid_count = detail::is_valid_byte_count<T>(count);
+  assert(valid_count && "nstd::from_bytes count overflow");
+  if (!valid_count) {
+    return;
+  }
   assert(dst != nullptr && "nstd::from_bytes requires dst is not null");
   assert(src != nullptr && "nstd::from_bytes requires src is not null");
-  assert(count <= std::numeric_limits<std::size_t>::max() / sizeof(T) && "nstd::from_bytes count overflow");
-  static_cast<void>(std::memcpy(dst, src, count * sizeof(T)));
+  if (dst != nullptr && src != nullptr) {
+    static_cast<void>(std::memmove(static_cast<void*>(dst), src, count * sizeof(T)));
+  }
 }
 
 template <typename T, std::size_t N>
-auto from_bytes(T (&dst)[N], const byte* src) noexcept -> std::enable_if_t<std::is_trivially_copyable_v<T>> {
-  return from_bytes(dst, src, N);
+auto from_bytes(T (&dst)[N], const byte* src) noexcept -> detail::enable_if_byte_destination_t<T> {
+  return ::nstd::from_bytes(dst, src, N);
 }
 
 } // namespace nstd

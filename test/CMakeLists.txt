@@ -125,11 +125,16 @@ if(HAS_CPP17_FLAG)
     make_mode_test(${PROJECT_NAME}-attributes-cpp17.t attributes_test.cpp c++17)
     make_mode_test(${PROJECT_NAME}-byte.t byte_test.cpp c++17)
     make_mode_test(${PROJECT_NAME}-utility.t utility_test.cpp c++17)
+
+    if(WIN32)
+        make_mode_test(${PROJECT_NAME}-windows-headers.t windows_headers_test.cpp c++17)
+    endif()
 endif()
 
 if(HAS_CPP20_FLAG)
     make_test(${PROJECT_NAME}-cpp20.t c++20)
     make_mode_test(${PROJECT_NAME}-attributes-cpp20.t attributes_test.cpp c++20)
+    make_mode_test(${PROJECT_NAME}-byte-cpp20.t byte_test.cpp c++20)
 endif()
 
 if(HAS_CPPLATEST_FLAG)

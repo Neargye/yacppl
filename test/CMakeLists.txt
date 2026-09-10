@@ -135,6 +135,7 @@ if(HAS_CPP20_FLAG)
     make_test(${PROJECT_NAME}-cpp20.t c++20)
     make_mode_test(${PROJECT_NAME}-attributes-cpp20.t attributes_test.cpp c++20)
     make_mode_test(${PROJECT_NAME}-byte-cpp20.t byte_test.cpp c++20)
+    make_mode_test(${PROJECT_NAME}-utility-cpp20.t utility_test.cpp c++20)
 endif()
 
 if(HAS_CPPLATEST_FLAG)

@@ -31,6 +31,7 @@
 #define NEARGYE_NSTD_TYPE_TRAITS_HPP
 
 #include <type_traits>
+#include <utility>
 
 namespace nstd {
 
@@ -130,8 +131,7 @@ template <typename B1>
 struct conjunction<B1> : B1 {};
 
 template <typename B1, typename... Bn>
-struct conjunction<B1, Bn...>
-    : std::conditional<static_cast<bool>(B1::value), conjunction<Bn...>, B1>::type {};
+struct conjunction<B1, Bn...> : conditional_t<static_cast<bool>(B1::value), conjunction<Bn...>, B1> {};
 
 template <typename...>
 struct disjunction : std::false_type {};
@@ -140,8 +140,7 @@ template <typename B1>
 struct disjunction<B1> : B1 {};
 
 template <typename B1, typename... Bn>
-struct disjunction<B1, Bn...>
-    : std::conditional<static_cast<bool>(B1::value), B1, disjunction<Bn...>>::type {};
+struct disjunction<B1, Bn...> : conditional_t<static_cast<bool>(B1::value), B1, disjunction<Bn...>> {};
 
 template <typename B>
 struct negation : bool_constant<!static_cast<bool>(B::value)> {};
@@ -183,7 +182,7 @@ template <template <typename...> class Op, typename... Args>
 #  if defined(__cpp_inline_variables) && __cpp_inline_variables >= 201606L
 inline
 #  endif
-constexpr bool is_detected_v = detail::detector<detail::nonesuch, void, Op, Args...>::value_t::value;
+constexpr bool is_detected_v = is_detected<Op, Args...>::value;
 #endif
 
 template <template <typename...> class Op, typename... Args>
@@ -225,7 +224,7 @@ using identity_t = typename identity<T>::type;
 template <typename T>
 using type_identity_t = typename type_identity<T>::type;
 
-// Removes pointer specifiers from the given type.
+// Removes one pointer level from the given type.
 template <typename T>
 struct remove_ptr : std::remove_pointer<T> {};
 
@@ -241,7 +240,7 @@ using remove_ref_t = remove_reference_t<T>;
 
 // Removes const, volatile, reference specifiers from the given type.
 template <typename T>
-struct remove_cv_ref : std::remove_cv<typename std::remove_reference<T>::type> {};
+struct remove_cv_ref : std::remove_cv<remove_reference_t<T>> {};
 
 template <typename T>
 using remove_cv_ref_t = typename remove_cv_ref<T>::type;
@@ -249,20 +248,16 @@ using remove_cv_ref_t = typename remove_cv_ref<T>::type;
 template <typename T>
 using remove_cvref_t = remove_cv_ref_t<T>;
 
-// Removes all pointer from the given type.
+// Removes all pointer levels from the given type.
 template <typename T>
-struct remove_all_ptr
-    : std::conditional<std::is_pointer<T>::value,
-          remove_all_ptr<typename std::remove_pointer<T>::type>,
-          identity<T>
-              >::type {};
+struct remove_all_ptr : conditional_t<std::is_pointer<T>::value, remove_all_ptr<remove_pointer_t<T>>, identity<T>> {};
 
 template <typename T>
 using remove_all_ptr_t = typename remove_all_ptr<T>::type;
 
 // Removes all const, volatile, reference, pointer specifiers from the given type.
 template <typename T>
-struct remove_all_cv_ref_ptr : remove_cv_ref<typename remove_all_ptr<typename remove_cv_ref<T>::type>::type> {};
+struct remove_all_cv_ref_ptr : remove_cv_ref<remove_all_ptr_t<remove_cv_ref_t<T>>> {};
 
 template <typename T>
 using remove_all_cv_ref_ptr_t = typename remove_all_cv_ref_ptr<T>::type;
@@ -270,18 +265,16 @@ using remove_all_cv_ref_ptr_t = typename remove_all_cv_ref_ptr<T>::type;
 // Removes all const, volatile, reference, pointer, array extents specifiers from the given type.
 template <typename T>
 struct remove_all_cv_ref_ptr_ext
-    : std::conditional<std::is_array<typename remove_all_cv_ref_ptr<T>::type>::value,
-          remove_all_cv_ref_ptr_ext<typename std::remove_all_extents<typename remove_all_cv_ref_ptr<T>::type>::type>,
-          identity<typename remove_all_cv_ref_ptr<T>::type>
-              >::type {};
+    : conditional_t<std::is_array<remove_all_cv_ref_ptr_t<T>>::value,
+                    remove_all_cv_ref_ptr_ext<remove_all_extents_t<remove_all_cv_ref_ptr_t<T>>>,
+                    identity<remove_all_cv_ref_ptr_t<T>>> {};
 
 template <typename T>
 using remove_all_cv_ref_ptr_ext_t = typename remove_all_cv_ref_ptr_ext<T>::type;
 
-// Checks if two types are the same signed/unsigned.
+// Checks whether two types have the same signedness.
 template <typename T, typename U>
-struct is_same_signedness : bool_constant<(std::is_signed<T>::value && std::is_signed<U>::value) ||
-                                         (std::is_unsigned<T>::value && std::is_unsigned<U>::value)> {};
+struct is_same_signedness : bool_constant<(std::is_signed<T>::value && std::is_signed<U>::value) || (std::is_unsigned<T>::value && std::is_unsigned<U>::value)> {};
 
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
 template <typename T, typename U>
@@ -306,10 +299,7 @@ constexpr bool is_nothrow_convertible_v = std::is_nothrow_convertible<From, To>:
 namespace detail {
 
 // https://reviews.llvm.org/D58019
-template <typename From, typename To,
-          bool = std::integral_constant<bool, std::is_void<From>::value ||
-                                              std::is_function<To>::value ||
-                                              std::is_array<To>::value>::value>
+template <typename From, typename To, bool = std::is_void<From>::value || std::is_function<To>::value || std::is_array<To>::value>
 struct is_nothrow_convertible {
   using type = std::is_void<To>;
 };
@@ -330,11 +320,10 @@ struct is_nothrow_convertible<From, To, false> {
   using type = decltype(is_nothrow_convertible_impl::test<From, To>(0));
 };
 
-} // nstd::detail
+} // namespace nstd::detail
 
 template <typename From, typename To>
-struct is_nothrow_convertible
-    : detail::is_nothrow_convertible<From, To>::type {};
+struct is_nothrow_convertible : detail::is_nothrow_convertible<From, To>::type {};
 
 #  if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
 template <typename From, typename To>

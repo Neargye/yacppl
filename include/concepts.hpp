@@ -82,12 +82,10 @@ template <typename T>
 using Integral = TypeConcept<T, std::is_integral<typename std::remove_reference<T>::type>::value>;
 
 template <typename T>
-using SignedIntegral = TypeConcept<T, std::is_integral<typename std::remove_reference<T>::type>::value &&
-                                      std::is_signed<typename std::remove_reference<T>::type>::value>;
+using SignedIntegral = TypeConcept<T, std::is_integral<typename std::remove_reference<T>::type>::value && std::is_signed<typename std::remove_reference<T>::type>::value>;
 
 template <typename T>
-using UnsignedIntegral = TypeConcept<T, std::is_integral<typename std::remove_reference<T>::type>::value &&
-                                        std::is_unsigned<typename std::remove_reference<T>::type>::value>;
+using UnsignedIntegral = TypeConcept<T, std::is_integral<typename std::remove_reference<T>::type>::value && std::is_unsigned<typename std::remove_reference<T>::type>::value>;
 
 template <typename T>
 using FloatingPoint = TypeConcept<T, std::is_floating_point<typename std::remove_reference<T>::type>::value>;

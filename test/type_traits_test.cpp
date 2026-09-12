@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 - 2026 Daniil Goncharov <neargye@gmail.com>.
 
+#include <type_traits.hpp>
+
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest.h>
-
-#include <type_traits.hpp>
 
 #include <type_traits>
 
@@ -25,6 +25,20 @@ struct class_type {};
 
 struct no_value_member {};
 
+struct private_value_member {
+private:
+  using value_type = int;
+};
+
+struct deleted_plus {
+  friend deleted_plus operator+(deleted_plus, deleted_plus) = delete;
+};
+
+struct overloaded_plus {
+  long operator+(int) const;
+  short operator+(long) const;
+};
+
 enum enum_type : unsigned short {
   enum_value = 0
 };
@@ -41,11 +55,38 @@ struct nothrow_int {
   nothrow_int(int) noexcept {}
 };
 
+struct deleted_int_conversion {
+  operator int() const = delete;
+};
+
+struct private_int_conversion {
+private:
+  operator int() const noexcept;
+};
+
+struct throwing_int_conversion {
+  operator int() const noexcept(false) {
+    return 0;
+  }
+};
+
+struct nothrow_int_conversion {
+  operator int() const noexcept {
+    return 0;
+  }
+};
+
 template <typename T>
 using copy_assign_t = decltype(std::declval<T&>() = std::declval<const T&>());
 
 template <typename T>
 using value_type_t = typename T::value_type;
+
+template <typename T, typename U>
+using plus_result_t = decltype(std::declval<T>() + std::declval<U>());
+
+using function_type = int(double);
+using function_pointer_array = int (*const volatile (&)[2])(double);
 
 } // namespace
 
@@ -55,17 +96,23 @@ TEST_CASE("type alias helpers match standard type transformations") {
   static_assert(std::is_same<nstd::conditional_t<true, int, long>, int>::value, "conditional_t true branch must match.");
   static_assert(std::is_same<nstd::conditional_t<false, int, long>, long>::value, "conditional_t false branch must match.");
   static_assert(std::is_same<nstd::decay_t<int&>, int>::value, "decay_t must remove references.");
+  static_assert(std::is_same<nstd::decay_t<int[3]>, int*>::value, "decay_t must convert arrays to pointers.");
+  static_assert(std::is_same<nstd::decay_t<int[]>, int*>::value, "decay_t must convert unknown-bound arrays to pointers.");
+  static_assert(std::is_same<nstd::decay_t<int(int)>, int (*)(int)>::value, "decay_t must convert functions to pointers.");
   static_assert(std::is_same<nstd::remove_const_t<const int>, int>::value, "remove_const_t must remove const.");
   static_assert(std::is_same<nstd::remove_volatile_t<volatile int>, int>::value, "remove_volatile_t must remove volatile.");
   static_assert(std::is_same<nstd::remove_cv_t<const volatile int>, int>::value, "remove_cv_t must remove cv.");
   static_assert(std::is_same<nstd::remove_pointer_t<int*>, int>::value, "remove_pointer_t must remove one pointer.");
   static_assert(std::is_same<nstd::remove_reference_t<int&>, int>::value, "remove_reference_t must remove one reference.");
   static_assert(std::is_same<nstd::remove_extent_t<int[2]>, int>::value, "remove_extent_t must remove one array extent.");
+  static_assert(std::is_same<nstd::remove_extent_t<int[]>, int>::value, "remove_extent_t must remove an unknown array extent.");
   static_assert(std::is_same<nstd::remove_all_extents_t<int[2][3]>, int>::value, "remove_all_extents_t must remove all array extents.");
+  static_assert(std::is_same<nstd::remove_all_extents_t<int[][3]>, int>::value, "remove_all_extents_t must handle an unknown outer extent.");
   static_assert(std::is_same<nstd::add_const_t<int>, const int>::value, "add_const_t must add const.");
   static_assert(std::is_same<nstd::add_volatile_t<int>, volatile int>::value, "add_volatile_t must add volatile.");
   static_assert(std::is_same<nstd::add_cv_t<int>, const volatile int>::value, "add_cv_t must add cv.");
   static_assert(std::is_same<nstd::add_pointer_t<int>, int*>::value, "add_pointer_t must add pointer.");
+  static_assert(std::is_same<nstd::add_pointer_t<function_type>, int (*)(double)>::value, "add_pointer_t must create a function pointer.");
   static_assert(std::is_same<nstd::add_lvalue_reference_t<int>, int&>::value, "add_lvalue_reference_t must add lvalue reference.");
   static_assert(std::is_same<nstd::add_rvalue_reference_t<int>, int&&>::value, "add_rvalue_reference_t must add rvalue reference.");
   static_assert(std::is_same<nstd::make_signed_t<unsigned int>, int>::value, "make_signed_t must make signed type.");
@@ -96,10 +143,17 @@ TEST_CASE("detection idiom reports valid and invalid expressions") {
   static_assert(std::is_same<nstd::void_t<int, long>, void>::value, "void_t must expose void.");
   static_assert(nstd::is_detected<copy_assign_t, copy_assignable>::value, "copy assignment must be detected.");
   static_assert(!nstd::is_detected<copy_assign_t, not_copy_assignable>::value, "deleted copy assignment must not be detected.");
+  static_assert(!nstd::is_detected<value_type_t, private_value_member>::value, "private nested types must not be detected.");
+  static_assert(!nstd::is_detected<plus_result_t, deleted_plus, deleted_plus>::value, "deleted operators must not be detected.");
+  static_assert(nstd::is_detected_exact<long, plus_result_t, overloaded_plus, int>::value, "overloaded operators must expose the selected exact type.");
+  static_assert(nstd::is_detected_exact<short, plus_result_t, overloaded_plus, long>::value, "overload resolution must remain visible through detection.");
   static_assert(std::is_same<nstd::detected_t<copy_assign_t, copy_assignable>, copy_assignable&>::value, "detected_t must expose expression type.");
   static_assert(std::is_same<nstd::detected_or_t<int, value_type_t, class_type>, int>::value, "detected_or_t must expose default when detection fails.");
+  static_assert(!nstd::detected_or<int, value_type_t, class_type>::value_t::value, "detected_or must expose a false value_t when detection fails.");
+  static_assert(nstd::detected_or<int, value_type_t, private_value_member>::value_t::value == false, "private members must select the detected_or default.");
   static_assert(nstd::is_detected_exact<copy_assignable&, copy_assign_t, copy_assignable>::value, "is_detected_exact must match exact type.");
   static_assert(nstd::is_detected_convertible<copy_assignable&, copy_assign_t, copy_assignable>::value, "is_detected_convertible must match convertible type.");
+  static_assert(!nstd::is_detected_convertible<int, value_type_t, class_type>::value, "failed detection must not be reported as convertible.");
 }
 
 TEST_CASE("custom removal traits remove all requested qualifiers") {
@@ -112,8 +166,11 @@ TEST_CASE("custom removal traits remove all requested qualifiers") {
   static_assert(std::is_same<nstd::remove_cvref_t<const volatile int&>, int>::value, "remove_cvref_t must remove cv and reference.");
   static_assert(std::is_same<nstd::remove_all_ptr_t<int***>, int>::value, "remove_all_ptr_t must remove all pointer levels.");
   static_assert(std::is_same<nstd::remove_all_ptr_t<int* const* volatile>, int>::value, "remove_all_ptr_t must remove cv-qualified pointer levels.");
+  static_assert(std::is_same<nstd::remove_all_ptr_t<int (*const volatile)(double)>, function_type>::value, "remove_all_ptr_t must preserve the pointed-to function type.");
   static_assert(std::is_same<nstd::remove_all_cv_ref_ptr_t<const int* const volatile&>, int>::value, "remove_all_cv_ref_ptr_t must remove cv/ref/pointers.");
   static_assert(std::is_same<nstd::remove_all_cv_ref_ptr_ext_t<const int* const volatile (&)[2]>, int>::value, "remove_all_cv_ref_ptr_ext_t must remove cv/ref/pointers/arrays.");
+  static_assert(std::is_same<nstd::remove_all_cv_ref_ptr_ext_t<int* const volatile (&)[]>, int>::value, "remove_all_cv_ref_ptr_ext_t must handle unknown-bound arrays.");
+  static_assert(std::is_same<nstd::remove_all_cv_ref_ptr_ext_t<function_pointer_array>, function_type>::value, "remove_all_cv_ref_ptr_ext_t must preserve function types behind pointer arrays.");
 }
 
 TEST_CASE("same signedness only matches actual signed or unsigned categories") {
@@ -135,6 +192,14 @@ TEST_CASE("nothrow convertibility follows noexcept conversion semantics") {
   static_assert(!nstd::is_nothrow_convertible<int, int&>::value, "int must not be convertible to int&.");
   static_assert(nstd::is_nothrow_convertible<int&, int&>::value, "int& must be nothrow convertible to int&.");
   static_assert(nstd::is_nothrow_convertible<int&, const int&>::value, "int& must be nothrow convertible to const int&.");
+  static_assert(nstd::is_nothrow_convertible<int (&)[2], int*>::value, "array-to-pointer conversion must be nothrow.");
+  static_assert(nstd::is_nothrow_convertible<function_type&, int (*)(double)>::value, "function-to-pointer conversion must be nothrow.");
+  static_assert(!nstd::is_nothrow_convertible<int[2], int[2]>::value, "array destinations must be rejected.");
+  static_assert(!nstd::is_nothrow_convertible<function_type, function_type>::value, "function destinations must be rejected.");
+  static_assert(!nstd::is_nothrow_convertible<deleted_int_conversion, int>::value, "deleted conversions must be rejected.");
+  static_assert(!nstd::is_nothrow_convertible<private_int_conversion, int>::value, "private conversions must be rejected.");
+  static_assert(!nstd::is_nothrow_convertible<throwing_int_conversion, int>::value, "throwing conversion operators must be reported as potentially throwing.");
+  static_assert(nstd::is_nothrow_convertible<nothrow_int_conversion, int>::value, "nothrow conversion operators must be reported as nothrow.");
 
 #if defined(__cpp_variable_templates) && __cpp_variable_templates >= 201304L
   static_assert(nstd::is_same_signedness_v<int, long>, "is_same_signedness_v must expose is_same_signedness::value.");

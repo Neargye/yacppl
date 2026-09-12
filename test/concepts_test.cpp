@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 - 2026 Daniil Goncharov <neargye@gmail.com>.
 
+#include <concepts.hpp>
+
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest.h>
-
-#include <concepts.hpp>
 
 #include <string>
 #include <type_traits>
@@ -137,12 +137,14 @@ TEST_CASE("type category concepts accept and reject expected types") {
   static_assert(!is_concept_well_formed<nstd::RValue, int&>::value, "int& does not model RValue.");
   static_assert(!is_concept_well_formed<nstd::RValue, const int>::value, "const int does not model mutable RValue.");
   static_assert(is_concept_well_formed<nstd::LValue, int&>::value, "int& models LValue.");
+  static_assert(is_concept_well_formed<nstd::LValue, const int&>::value, "const int& models LValue.");
   static_assert(!is_concept_well_formed<nstd::LValue, int>::value, "int does not model LValue.");
   static_assert(is_concept_well_formed<nstd::Reference, int&>::value, "int& models Reference.");
   static_assert(is_concept_well_formed<nstd::Reference, int&&>::value, "int&& models Reference.");
   static_assert(!is_concept_well_formed<nstd::Reference, int>::value, "int does not model Reference.");
 
   static_assert(is_concept_well_formed<nstd::Const, const int>::value, "const int models Const.");
+  static_assert(is_concept_well_formed<nstd::Const, const int&>::value, "Const must inspect the referred-to type.");
   static_assert(!is_concept_well_formed<nstd::Const, int>::value, "int does not model Const.");
   static_assert(is_concept_well_formed<nstd::NotConst, int>::value, "int models NotConst.");
   static_assert(!is_concept_well_formed<nstd::NotConst, const int>::value, "const int does not model NotConst.");
@@ -169,12 +171,16 @@ TEST_CASE("type category concepts accept and reject expected types") {
   static_assert(is_concept_well_formed<nstd::Enum, enum_type>::value, "enum_type models Enum.");
   static_assert(!is_concept_well_formed<nstd::Enum, int>::value, "int does not model Enum.");
   static_assert(is_concept_well_formed<nstd::Pointer, int*>::value, "int* models Pointer.");
+  static_assert(is_concept_well_formed<nstd::Pointer, int* const volatile&>::value, "Pointer must preserve and inspect multi-level cv/ref types.");
   static_assert(!is_concept_well_formed<nstd::Pointer, int>::value, "int does not model Pointer.");
   static_assert(is_concept_well_formed<nstd::MemberPointer, int class_type::*>::value, "int class_type::* models MemberPointer.");
   static_assert(!is_concept_well_formed<nstd::MemberPointer, int*>::value, "int* does not model MemberPointer.");
   static_assert(is_concept_well_formed<nstd::Array, int[2]>::value, "int[2] models Array.");
+  static_assert(is_concept_well_formed<nstd::Array, int[]>::value, "unknown-bound arrays model Array.");
+  static_assert(is_concept_well_formed<nstd::Array, const int (&)[2]>::value, "array references model Array after reference removal.");
   static_assert(!is_concept_well_formed<nstd::Array, int*>::value, "int* does not model Array.");
   static_assert(is_concept_well_formed<nstd::Function, void()>::value, "void() models Function.");
+  static_assert(is_concept_well_formed<nstd::Function, void (&)()>::value, "function references model Function after reference removal.");
   static_assert(!is_concept_well_formed<nstd::Function, void (*)()>::value, "function pointer does not model Function.");
   static_assert(is_concept_well_formed<nstd::Object, class_type>::value, "class_type models Object.");
   static_assert(is_concept_well_formed<nstd::Object, int[2]>::value, "int[2] models Object.");

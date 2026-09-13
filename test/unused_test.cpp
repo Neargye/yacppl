@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 - 2026 Daniil Goncharov <neargye@gmail.com>.
 
+#include <unused.hpp>
+
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest.h>
-
-#include <unused.hpp>
 
 namespace {
 
@@ -44,18 +44,12 @@ TEST_CASE("NSTD_UNUSED supports variables and parameters") {
   CHECK(bits.value == 4);
 }
 
-TEST_CASE("NSTD_UNUSED does not evaluate arguments on non-MSVC compilers") {
+TEST_CASE("NSTD_UNUSED does not evaluate arguments") {
   side_effect_counter = 0;
 
-#if !defined(_MSC_VER)
   NSTD_UNUSED(increment_counter());
 
   CHECK(side_effect_counter == 0);
-#else
-  NSTD_UNUSED(side_effect_counter);
-
-  CHECK(side_effect_counter == 0);
-#endif
 }
 
 TEST_CASE("nstd::unused is a regular function call") {

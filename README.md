@@ -1,44 +1,37 @@
 # Yet Another C++ Library
 
-## A collection of small C++ utilities
+A collection of standalone C++ utilities.
 
-* [state_saver](include/state_saver.hpp) - Saves an object's current value and restores it on scope exit, failure, or success.
-
-* [attributes](include/attributes.hpp) - Attributes for C++98 and later.
-
-* [unused](include/unused.hpp) - Helpers with varying number of arguments to avoid "unused variable" warnings, with no effect on binary size, for C++11 and later.
-
-* [concepts](include/concepts.hpp) - SFINAE-friendly concept-like aliases for C++11 and later.
-
-* [type_traits](include/type_traits.hpp) - Implementations of some type traits, for C++11 and later.
-
-* [byte](include/byte.hpp) - Is a distinct type that implements the concept of byte as specified in the C++ language definition, with no aliasing to `char`, for C++17 and later.
-
-* [utility](include/utility.hpp) - implementations of some utility functions, for C++17 and later.
+* [state_saver](include/state_saver.hpp) - scope guards for C++11 and later that restore a saved value on exit, failure, or success.
+* [attributes](include/attributes.hpp) - portable attribute macros for C++98 and later.
+* [unused](include/unused.hpp) - helpers for suppressing unused-variable warnings in C++11 and later.
+* [concepts](include/concepts.hpp) - SFINAE-friendly aliases for C++11 and later.
+* [type_traits](include/type_traits.hpp) - additional type traits for C++11 and later.
+* [byte](include/byte.hpp) - a distinct byte type and byte-copy helpers for C++17 and later.
+* [utility](include/utility.hpp) - general utility helpers for C++17 and later.
 
 A combined [nstd_example.cpp](example/nstd_example.cpp) demonstrates several modules together.
 
 ## attributes
 
-`attributes` provides small portability macros for common compiler and standard attributes. Unsupported attributes degrade to a safe fallback.
+`attributes` provides portability macros for common compiler and standard attributes. Unsupported attributes use a safe fallback.
 
 ### Declaration attributes
 
 * `ATTR_NORETURN` - marks a function that does not return.
-* `ATTR_ALWAYS_INLINE` - strongly suggests that a function should be inlined.
+* `ATTR_ALWAYS_INLINE` - requests function inlining.
 * `ATTR_DEPRECATED("reason")` - marks a declaration as deprecated.
 * `ATTR_NODISCARD` - asks the compiler to warn when a return value is discarded.
-* `ATTR_NODISCARD_MSG("reason")` - same as `ATTR_NODISCARD`, with a reason on compilers that support C++20 `[[nodiscard("reason")]]`.
+* `ATTR_NODISCARD_MSG("reason")` - same as `ATTR_NODISCARD`, with a diagnostic reason when supported.
 * `ATTR_MAYBE_UNUSED` - suppresses unused warnings on declarations.
-* `ATTR_TRIVIAL_ABI` - requests Clang's `trivial_abi` calling convention for eligible class types. Put it after the `class` or `struct` keyword, for example `struct ATTR_TRIVIAL_ABI type`; other compilers use a no-op fallback.
-* `ATTR_NO_UNIQUE_ADDRESS` - marks a non-static data member that does not need a distinct address. MSVC uses `[[msvc::no_unique_address]]`; other supporting compilers use C++20 `[[no_unique_address]]`.
+* `ATTR_TRIVIAL_ABI` - requests Clang's `trivial_abi` for eligible classes. Put it after `class` or `struct`, for example `struct ATTR_TRIVIAL_ABI type`.
+* `ATTR_NO_UNIQUE_ADDRESS` - allows a non-static data member to share an address when supported.
 
 ### Statement and expression helpers
 
-* `ATTR_ASSUME(expr)` - optimizer assumption statement. On supporting compilers, behavior is undefined if `expr` is false; unsupported compilers use a no-op fallback that does not evaluate `expr`.
+* `ATTR_ASSUME(expr)` - tells the optimizer that `expr` is true. Do not use it for validation or pass expressions with side effects.
 * `ATTR_FALLTHROUGH` - marks an intentional `switch` fallthrough.
-* `ATTR_LIKELY(expr)` - expression helper for a likely branch condition.
-* `ATTR_UNLIKELY(expr)` - expression helper for an unlikely branch condition.
+* `ATTR_LIKELY(expr)` / `ATTR_UNLIKELY(expr)` - mark likely and unlikely branch conditions.
 
 See [attributes_example.cpp](example/attributes_example.cpp) for a complete example.
 
@@ -46,8 +39,8 @@ See [attributes_example.cpp](example/attributes_example.cpp) for a complete exam
 
 `unused` provides local-scope helpers for intentionally unused variables and parameters.
 
-* `nstd::unused(args...)` - function helper for one or more variables and parameters. It evaluates arguments like a normal function call and binds them by reference without copying.
-* `NSTD_UNUSED(args...)` - macro helper for one or more variables and parameters. On non-MSVC compilers it checks arguments through an unevaluated `decltype` expression; on MSVC it uses the traditional `(void)` path. Do not pass expressions with side effects; use an explicit `(void)expr` when evaluating and discarding an expression is intended.
+* `nstd::unused(args...)` - evaluates its arguments and binds them by reference.
+* `NSTD_UNUSED(args...)` - macro helper for one or more variables and parameters. Its arguments are not evaluated.
 
 Use `ATTR_MAYBE_UNUSED` from [attributes](include/attributes.hpp) for declaration-level suppression and `NSTD_UNUSED` for local expression-level suppression.
 
@@ -55,23 +48,23 @@ See [unused_example.cpp](example/unused_example.cpp) for a complete example.
 
 ## byte
 
-`byte` provides a C++17 `std::byte`-style distinct byte type in the `nstd` namespace. It is not an arithmetic type and does not alias `char`; use explicit conversion helpers when an integer value is needed.
+`byte` provides a C++17 `std::byte`-style type in the `nstd` namespace. It is not arithmetic and does not alias `char`.
 
 ### Operations
 
 * `nstd::byte` - scoped enum backed by `unsigned char`.
 * `nstd::to_byte(value)` - converts an integral value to `nstd::byte`.
 * `nstd::to_integer<T>(byte)` - converts a byte to an integral type.
-* Bitwise operators are supported: `~`, `|`, `&`, `^`, `<<`, `>>`, and their compound-assignment forms. Shift counts accept integral types except `bool`; values must be non-negative and smaller than the number of value bits in `unsigned int`, and debug builds assert this precondition.
-* `nstd::to_bytes(dst, value)` and `nstd::from_bytes<T>(src)` copy a single trivially copyable object through byte storage. The return-by-value `from_bytes<T>` form also requires `T` to be default constructible.
-* `nstd::from_bytes(value, src)` copies into an existing trivially copyable object, including objects that are not default constructible.
-* `nstd::to_bytes(dst, values, count)` and `nstd::from_bytes(dst, src, count)` copy arrays of trivially copyable objects. Bounded C-style arrays also have overloads that infer the element count. Debug builds assert that `count * sizeof(T)` does not overflow `std::size_t`; callers are still responsible for valid pointers and sufficiently large buffers.
+* Bitwise and shift operators are supported. Shift counts must be non-negative integral values other than `bool` and smaller than the bit width of `unsigned int`.
+* `nstd::to_bytes` and `nstd::from_bytes` copy trusted object representations of trivially copyable types; they do not validate serialized or untrusted input.
+* The return-by-value `nstd::from_bytes<T>` also requires a default constructor and a trivial copy or move constructor; the overload that writes to an existing object does not.
+* Counted copies support overlap and treat zero count as a no-op, including null pointers. Non-empty copies require valid pointers and sufficiently large buffers; overflowing counts are rejected without copying.
 
 See [byte_example.cpp](example/byte_example.cpp) for a complete example.
 
 ## concepts
 
-`concepts` provides C++11-compatible type aliases that behave like lightweight constraints in SFINAE contexts. They are not C++20 `concept` declarations; each alias exposes the constrained type when the predicate is true and is ill-formed during substitution when the predicate is false.
+`concepts` provides C++11 SFINAE aliases, not C++20 `concept` declarations. An alias resolves to the constrained type when its predicate is true.
 
 ```cpp
 #include <concepts.hpp>
@@ -115,6 +108,8 @@ See [concepts_example.cpp](example/concepts_example.cpp) for a complete example.
 
 `type_traits` provides C++11-compatible helpers for type transformation, detection, and a few missing standard-library traits.
 
+Variable-template `_v` forms are available when supported by the selected language standard.
+
 ### Alias helpers
 
 * `nstd::bool_constant<B>`, `nstd::enable_if_t<C, T>`, `nstd::conditional_t<C, T, F>`.
@@ -128,10 +123,10 @@ See [concepts_example.cpp](example/concepts_example.cpp) for a complete example.
 ### Detection idiom
 
 * `nstd::void_t<T...>`.
-* `nstd::is_detected<Op, Args...>` and, when variable templates are supported, `nstd::is_detected_v<Op, Args...>`.
+* `nstd::is_detected<Op, Args...>` / `nstd::is_detected_v<Op, Args...>`.
 * `nstd::detected_t<Op, Args...>`, `nstd::detected_or<Default, Op, Args...>`, and `nstd::detected_or_t<Default, Op, Args...>`.
-* `nstd::is_detected_exact<Expected, Op, Args...>` and, when variable templates are supported, `nstd::is_detected_exact_v<Expected, Op, Args...>`.
-* `nstd::is_detected_convertible<To, Op, Args...>` and, when variable templates are supported, `nstd::is_detected_convertible_v<To, Op, Args...>`.
+* `nstd::is_detected_exact<Expected, Op, Args...>` / `nstd::is_detected_exact_v<Expected, Op, Args...>`.
+* `nstd::is_detected_convertible<To, Op, Args...>` / `nstd::is_detected_convertible_v<To, Op, Args...>`.
 
 ### Transformations and predicates
 
@@ -142,15 +137,15 @@ See [concepts_example.cpp](example/concepts_example.cpp) for a complete example.
 * `nstd::remove_all_ptr<T>` / `nstd::remove_all_ptr_t<T>`.
 * `nstd::remove_all_cv_ref_ptr<T>` / `nstd::remove_all_cv_ref_ptr_t<T>`.
 * `nstd::remove_all_cv_ref_ptr_ext<T>` / `nstd::remove_all_cv_ref_ptr_ext_t<T>`.
-* `nstd::conjunction<T...>`, `nstd::disjunction<T...>`, and `nstd::negation<T>`, with `_v` variable-template forms when supported.
-* `nstd::is_same_signedness<T, U>` and, when variable templates are supported, `nstd::is_same_signedness_v<T, U>` - true only when both types are signed or both types are unsigned.
-* `nstd::is_nothrow_convertible<From, To>` and, when variable templates are supported, `nstd::is_nothrow_convertible_v<From, To>` - C++11-compatible backport of `std::is_nothrow_convertible`.
+* `nstd::conjunction<T...>`, `nstd::disjunction<T...>`, and `nstd::negation<T>`.
+* `nstd::is_same_signedness<T, U>` - true when both types have the same signedness.
+* `nstd::is_nothrow_convertible<From, To>` - C++11-compatible backport of `std::is_nothrow_convertible`.
 
 See [type_traits_example.cpp](example/type_traits_example.cpp) for a complete example.
 
 ## state_saver
 
-`state_saver` saves a copy of an object and restores that value later. It is useful for temporarily changing configuration flags, counters, stream state, or any other assignable object whose original value must be restored reliably.
+`state_saver` restores a saved object value on exit, failure, or success.
 
 ```cpp
 #include <state_saver.hpp>
@@ -169,18 +164,9 @@ void use_temporary_value(int& value) {
 * `nstd::saver_fail<T>` / `SAVER_FAIL(x)` - restores when scope exits while a new exception is being unwound.
 * `nstd::saver_success<T>` / `SAVER_SUCCESS(x)` - restores when scope exits without a new exception being unwound.
 * `MAKE_SAVER_EXIT(name, x)`, `MAKE_SAVER_FAIL(name, x)`, and `MAKE_SAVER_SUCCESS(name, x)` create named guards.
-* `WITH_SAVER_EXIT(x)`, `WITH_SAVER_FAIL(x)`, and `WITH_SAVER_SUCCESS(x)` create a block-scoped guard before the block body.
+* `WITH_SAVER_EXIT(x)`, `WITH_SAVER_FAIL(x)`, and `WITH_SAVER_SUCCESS(x)` create a guard for a simple block. Use a named guard if the block needs `break` or `continue`.
 
 See [state_saver_exit_example.cpp](example/state_saver_exit_example.cpp), [state_saver_fail_example.cpp](example/state_saver_fail_example.cpp), and [state_saver_success_example.cpp](example/state_saver_success_example.cpp) for complete examples.
-
-```cpp
-void run_with_saved_state(int& value) {
-  WITH_SAVER_EXIT(value) {
-    value = 7;
-    // value is restored before control leaves this block.
-  }
-}
-```
 
 ### Interface
 
@@ -189,26 +175,28 @@ void run_with_saved_state(int& value) {
 
 ### Requirements
 
-The saved object must be non-const, non-pointer, non-array, non-function, copy constructible, and assignable. Automatic restore chooses copy or move assignment from the configured/default assignment policy. `restore()` always requires copy assignment because it keeps the saved value available for a later automatic restore.
+The object must be non-const, non-pointer, non-array, non-function, constructible from a non-const lvalue, assignable, and nothrow destructible. Automatic restore assigns from an rvalue if that expression is `noexcept` or lvalue assignment is unavailable; otherwise it assigns from an lvalue. `restore()` assigns from an lvalue.
 
 ### Configuration
 
-Only one restore policy may be defined:
+Set configuration macros before including `<state_saver.hpp>` and use the same values in every translation unit. At most one restore policy may be defined:
 
-* `STATE_SAVER_MAY_THROW_RESTORE` - default; restore may throw.
-* `STATE_SAVER_NO_THROW_RESTORE` - require noexcept restore.
-* `STATE_SAVER_SUPPRESS_THROW_RESTORE` - suppress restore exceptions.
+* `STATE_SAVER_MAY_THROW_RESTORE` - restore may throw; this is the default.
+* `STATE_SAVER_NO_THROW_RESTORE` - requires noexcept restore.
+* `STATE_SAVER_SUPPRESS_THROW_RESTORE` - catches restore exceptions.
+
+With the default policy, an automatic restore that throws during exception unwinding calls `std::terminate`. Use the no-throw policy for noexcept assignment or the suppress policy when this must be avoided.
 
 Optional settings:
 
-* `STATE_SAVER_CATCH_HANDLER` - handler used by `STATE_SAVER_SUPPRESS_THROW_RESTORE`.
-* `STATE_SAVER_NO_THROW_CONSTRUCTIBLE` - require nothrow saved-value construction.
-* `STATE_SAVER_FORCE_MOVE_ASSIGNABLE` - force destructor restore through move assignment.
-* `STATE_SAVER_FORCE_COPY_ASSIGNABLE` - force destructor restore through copy assignment.
+* `STATE_SAVER_CATCH_HANDLER` - handles suppressed restore exceptions and must not throw.
+* `STATE_SAVER_NO_THROW_CONSTRUCTIBLE` - requires nothrow saved-value construction.
+* `STATE_SAVER_FORCE_MOVE_ASSIGNABLE` - forces automatic assignment from an rvalue.
+* `STATE_SAVER_FORCE_COPY_ASSIGNABLE` - forces automatic assignment from an lvalue.
 
 ## utility
 
-`utility` provides C++17 helpers for forwarding, safe move-selection, byte-preserving casts, and applying callables to argument packs or tuple-like values.
+`utility` provides C++17 forwarding, conversion, invocation, and comparison helpers.
 
 ### Forwarding and move helpers
 
@@ -216,18 +204,18 @@ Optional settings:
 * `nstd::move_if_noexcept(x)` - move-construction helper matching `std::move_if_noexcept`, with const-object rejection.
 * `nstd::move_assign_if_noexcept(x)` - assignment-oriented equivalent that falls back to `const T&` when move assignment may throw and copy assignment is available.
 * `nstd::forward<T>(x)` - forwarding helper matching `std::forward`.
-* `nstd::forward_like<T>(x)` - C++23-style helper that applies `T`'s cv-ref qualifiers to `x`.
+* `nstd::forward_like<T>(x)` - C++23-style helper that applies `T`'s const/reference qualifiers to `x`.
 * `nstd::unforward(x)` and `nstd::decay_copy(x)` - value-materialization helpers.
 
 ### Invocation and conversion helpers
 
-* `nstd::bit_cast<To>(from)` - C++17 byte-preserving cast for same-size trivially copyable types. This portable implementation also requires `To` to be trivially default constructible.
+* `nstd::bit_cast<To>(from)` - C++17 cast between same-size trivially copyable types. `To` must be non-cv, have a default constructor and a trivial copy or move constructor, and accept the source representation. Padding bytes need not be preserved.
 * `nstd::invoke_each(f, args...)` - invokes `f` once for each argument.
 * `nstd::apply_each(f, tuple_like)` - invokes `f` once for each element of a tuple-like object such as `std::tuple`, `std::pair`, or `std::array`.
 * `nstd::to_underlying(e)` - C++23-style enum-to-underlying conversion.
-* `nstd::cmp_equal`, `nstd::cmp_not_equal`, `nstd::cmp_less`, `nstd::cmp_greater`, `nstd::cmp_less_equal`, and `nstd::cmp_greater_equal` - C++20-style integer comparisons that handle mixed signedness without lossy casts.
-* `nstd::in_range<T>(value)` - C++20-style check that an integer value is representable by `T`.
-* `nstd::constexpr_for<Start, End, Inc>(f)` - compile-time increasing loop over integral constants. `Inc` must be positive.
+* `nstd::cmp_equal`, `nstd::cmp_not_equal`, `nstd::cmp_less`, `nstd::cmp_greater`, `nstd::cmp_less_equal`, and `nstd::cmp_greater_equal` - C++20-style signed/unsigned integer comparisons without lossy casts.
+* `nstd::in_range<T>(value)` - C++20-style signed/unsigned integer range check.
+* `nstd::constexpr_for<Start, End, Inc>(f)` - increasing loop over same-type non-bool integral constants. `Inc` must be positive.
 
 See [utility_example.cpp](example/utility_example.cpp) for a complete example.
 

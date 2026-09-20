@@ -75,14 +75,8 @@ struct apply_each_traits<F, Tuple, std::void_t<decltype(std::tuple_size<std::rem
   static constexpr bool is_nothrow = decltype(test_nothrow_applicable_each<F, Tuple>(indices{}))::value;
 };
 
-template <typename F, typename Tuple>
-using enable_if_applicable_each_t = std::enable_if_t<apply_each_traits<F, Tuple>::is_applicable>;
-
-template <typename F, typename Tuple>
-inline constexpr bool is_nothrow_applicable_each_v = apply_each_traits<F, Tuple>::is_nothrow;
-
 template <typename F, typename Tuple, std::size_t... I>
-constexpr void apply_each_impl(F&& f, Tuple&& t, std::index_sequence<I...>) noexcept(is_nothrow_applicable_each_v<F, Tuple&&>) {
+constexpr void apply_each_impl(F&& f, Tuple&& t, std::index_sequence<I...>) noexcept(apply_each_traits<F, Tuple&&>::is_nothrow) {
   (static_cast<void>(std::invoke(f, std::get<I>(std::forward<Tuple>(t)))), ...);
 }
 
@@ -196,14 +190,12 @@ template <typename T, std::enable_if_t<!std::is_lvalue_reference_v<T>, int> = 0>
 
 template <typename T, std::enable_if_t<std::is_constructible_v<std::remove_reference_t<T>, T&&>, int> = 0>
 [[nodiscard]] constexpr auto unforward(T&& t) noexcept(std::is_nothrow_constructible_v<std::remove_reference_t<T>, T&&>) -> std::remove_reference_t<T> {
-  using result_type = std::remove_reference_t<T>;
-  return result_type(::nstd::forward<T>(t));
+  return std::remove_reference_t<T>(::nstd::forward<T>(t));
 }
 
 template <typename T, std::enable_if_t<std::is_constructible_v<std::decay_t<T>, T&&>, int> = 0>
 [[nodiscard]] constexpr auto decay_copy(T&& t) noexcept(std::is_nothrow_constructible_v<std::decay_t<T>, T&&>) -> std::decay_t<T> {
-  using result_type = std::decay_t<T>;
-  return result_type(::nstd::forward<T>(t));
+  return std::decay_t<T>(::nstd::forward<T>(t));
 }
 
 template <typename To, typename From>
@@ -219,8 +211,8 @@ constexpr auto invoke_each(F&& f, Args&&... args) noexcept(detail::is_nothrow_in
 }
 
 template <typename F, typename Tuple>
-constexpr auto apply_each(F&& f, Tuple&& t) noexcept(detail::is_nothrow_applicable_each_v<F, Tuple&&>) -> detail::enable_if_applicable_each_t<F, Tuple&&> {
-  detail::apply_each_impl(std::forward<F>(f), std::forward<Tuple>(t), std::make_index_sequence<std::tuple_size_v<std::remove_reference_t<Tuple>>>{});
+constexpr auto apply_each(F&& f, Tuple&& t) noexcept(detail::apply_each_traits<F, Tuple&&>::is_nothrow) -> std::enable_if_t<detail::apply_each_traits<F, Tuple&&>::is_applicable> {
+  detail::apply_each_impl(std::forward<F>(f), std::forward<Tuple>(t), typename detail::apply_each_traits<F, Tuple&&>::indices{});
 }
 
 template <typename T, typename U, detail::enable_if_referenceable_t<T> = 0>

@@ -347,14 +347,13 @@ TEST_CASE("counted byte copies define zero, overflow, and null behavior") {
   nstd::to_bytes<std::uint32_t>(nullptr, nullptr, 0);
   nstd::from_bytes<std::uint32_t>(nullptr, nullptr, 0);
 
-  constexpr auto max_count = (std::numeric_limits<std::size_t>::max)() / sizeof(payload);
-  constexpr auto overflow_count = max_count + 1;
-  static_assert(nstd::detail::is_valid_byte_count<payload>(max_count), "maximum non-overflowing count must be accepted.");
-  static_assert(!nstd::detail::is_valid_byte_count<payload>(overflow_count), "overflowing count must be rejected.");
-
-#if defined(NDEBUG)
   const payload source{42, 7};
   payload destination{1, 2};
+  constexpr auto max_count = (std::numeric_limits<std::size_t>::max)() / sizeof(payload);
+  CHECK(nstd::detail::can_copy_bytes<payload>(&destination, &source, max_count));
+
+#if defined(NDEBUG)
+  constexpr auto overflow_count = max_count + 1;
   std::array<nstd::byte, sizeof(payload)> bytes{};
   bytes.fill(nstd::to_byte(0xa5));
 

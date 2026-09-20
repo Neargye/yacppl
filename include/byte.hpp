@@ -63,8 +63,15 @@ template <typename T>
 using enable_if_byte_destination_t = std::enable_if_t<std::is_trivially_copyable_v<T> && !std::is_const_v<T> && !std::is_volatile_v<T>>;
 
 template <typename T>
-constexpr bool is_valid_byte_count(std::size_t count) noexcept {
-  return count <= (std::numeric_limits<std::size_t>::max)() / sizeof(T);
+bool can_copy_bytes(void* dst, const void* src, std::size_t count) noexcept {
+  if (count == 0) {
+    return false;
+  }
+  const bool valid_count = count <= (std::numeric_limits<std::size_t>::max)() / sizeof(T);
+  assert(valid_count && "nstd byte copy count overflow");
+  assert(dst != nullptr && "nstd byte copy requires dst is not null");
+  assert(src != nullptr && "nstd byte copy requires src is not null");
+  return valid_count && dst != nullptr && src != nullptr;
 }
 
 template <typename T>
@@ -87,31 +94,31 @@ template <typename I = unsigned char>
 }
 
 [[nodiscard]] constexpr byte operator~(byte b) noexcept {
-  return static_cast<byte>(static_cast<unsigned char>(~static_cast<unsigned int>(b)));
+  return static_cast<byte>(~static_cast<unsigned int>(b));
 }
 
 [[nodiscard]] constexpr byte operator|(byte lhs, byte rhs) noexcept {
-  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(lhs) | static_cast<unsigned int>(rhs)));
+  return static_cast<byte>(static_cast<unsigned int>(lhs) | static_cast<unsigned int>(rhs));
 }
 
 [[nodiscard]] constexpr byte operator&(byte lhs, byte rhs) noexcept {
-  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(lhs) & static_cast<unsigned int>(rhs)));
+  return static_cast<byte>(static_cast<unsigned int>(lhs) & static_cast<unsigned int>(rhs));
 }
 
 [[nodiscard]] constexpr byte operator^(byte lhs, byte rhs) noexcept {
-  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(lhs) ^ static_cast<unsigned int>(rhs)));
+  return static_cast<byte>(static_cast<unsigned int>(lhs) ^ static_cast<unsigned int>(rhs));
 }
 
 template <typename I>
 [[nodiscard]] constexpr auto operator<<(byte b, I shift) noexcept -> std::enable_if_t<detail::is_byte_shift_count<I>::value, byte> {
   assert(detail::is_valid_byte_shift(shift) && "nstd::byte shift out of range");
-  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(b) << static_cast<unsigned int>(shift)));
+  return static_cast<byte>(static_cast<unsigned int>(b) << static_cast<unsigned int>(shift));
 }
 
 template <typename I>
 [[nodiscard]] constexpr auto operator>>(byte b, I shift) noexcept -> std::enable_if_t<detail::is_byte_shift_count<I>::value, byte> {
   assert(detail::is_valid_byte_shift(shift) && "nstd::byte shift out of range");
-  return static_cast<byte>(static_cast<unsigned char>(static_cast<unsigned int>(b) >> static_cast<unsigned int>(shift)));
+  return static_cast<byte>(static_cast<unsigned int>(b) >> static_cast<unsigned int>(shift));
 }
 
 constexpr byte& operator|=(byte& lhs, byte rhs) noexcept {
@@ -136,30 +143,16 @@ constexpr auto operator>>=(byte& b, I shift) noexcept -> std::enable_if_t<detail
   return b = b >> shift;
 }
 
-// Copy object representations without validating data or buffer sizes.
 template <typename T>
-auto to_bytes(byte* dst, const T& src) noexcept -> detail::enable_if_byte_source_t<T> {
-  assert(dst != nullptr && "nstd::to_bytes requires dst is not null");
-  if (dst != nullptr) {
-    static_cast<void>(std::memmove(dst, std::addressof(src), sizeof(T)));
+auto to_bytes(byte* dst, const T* src, std::size_t count) noexcept -> detail::enable_if_byte_source_t<T> {
+  if (detail::can_copy_bytes<T>(dst, src, count)) {
+    static_cast<void>(std::memmove(dst, src, count * sizeof(T)));
   }
 }
 
 template <typename T>
-auto to_bytes(byte* dst, const T* src, std::size_t count) noexcept -> detail::enable_if_byte_source_t<T> {
-  if (count == 0) {
-    return;
-  }
-  const bool valid_count = detail::is_valid_byte_count<T>(count);
-  assert(valid_count && "nstd::to_bytes count overflow");
-  if (!valid_count) {
-    return;
-  }
-  assert(dst != nullptr && "nstd::to_bytes requires dst is not null");
-  assert(src != nullptr && "nstd::to_bytes requires src is not null");
-  if (dst != nullptr && src != nullptr) {
-    static_cast<void>(std::memmove(dst, src, count * sizeof(T)));
-  }
+auto to_bytes(byte* dst, const T& src) noexcept -> detail::enable_if_byte_source_t<T> {
+  return ::nstd::to_bytes(dst, std::addressof(src), 1);
 }
 
 template <typename T, std::size_t N>
@@ -178,28 +171,15 @@ template <typename T>
 }
 
 template <typename T>
-auto from_bytes(T& dst, const byte* src) noexcept -> detail::enable_if_byte_destination_t<T> {
-  assert(src != nullptr && "nstd::from_bytes requires src is not null");
-  if (src != nullptr) {
-    static_cast<void>(std::memmove(static_cast<void*>(std::addressof(dst)), src, sizeof(T)));
+auto from_bytes(T* dst, const byte* src, std::size_t count) noexcept -> detail::enable_if_byte_destination_t<T> {
+  if (detail::can_copy_bytes<T>(dst, src, count)) {
+    static_cast<void>(std::memmove(static_cast<void*>(dst), src, count * sizeof(T)));
   }
 }
 
 template <typename T>
-auto from_bytes(T* dst, const byte* src, std::size_t count) noexcept -> detail::enable_if_byte_destination_t<T> {
-  if (count == 0) {
-    return;
-  }
-  const bool valid_count = detail::is_valid_byte_count<T>(count);
-  assert(valid_count && "nstd::from_bytes count overflow");
-  if (!valid_count) {
-    return;
-  }
-  assert(dst != nullptr && "nstd::from_bytes requires dst is not null");
-  assert(src != nullptr && "nstd::from_bytes requires src is not null");
-  if (dst != nullptr && src != nullptr) {
-    static_cast<void>(std::memmove(static_cast<void*>(dst), src, count * sizeof(T)));
-  }
+auto from_bytes(T& dst, const byte* src) noexcept -> detail::enable_if_byte_destination_t<T> {
+  return ::nstd::from_bytes(std::addressof(dst), src, 1);
 }
 
 template <typename T, std::size_t N>

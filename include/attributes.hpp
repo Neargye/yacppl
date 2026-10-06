@@ -155,7 +155,7 @@
 // ATTR_LIKELY hints that the expression is true.
 #if !defined(ATTR_LIKELY)
 #  if defined(__clang__) || defined(__GNUC__)
-#    define ATTR_LIKELY(x) __builtin_expect(static_cast<bool>(x), 1)
+#    define ATTR_LIKELY(x) static_cast<bool>(__builtin_expect(static_cast<bool>(x), 1))
 #  else
 #    define ATTR_LIKELY(x) (static_cast<bool>(x))
 #  endif
@@ -164,7 +164,7 @@
 // ATTR_UNLIKELY hints that the expression is false.
 #if !defined(ATTR_UNLIKELY)
 #  if defined(__clang__) || defined(__GNUC__)
-#    define ATTR_UNLIKELY(x) __builtin_expect(static_cast<bool>(x), 0)
+#    define ATTR_UNLIKELY(x) static_cast<bool>(__builtin_expect(static_cast<bool>(x), 0))
 #  else
 #    define ATTR_UNLIKELY(x) (static_cast<bool>(x))
 #  endif
@@ -184,9 +184,9 @@
 // https://devblogs.microsoft.com/cppblog/msvc-cpp20-and-the-std-cpp20-switch/#msvc-extensions-and-abi
 // https://github.com/microsoft/STL/issues/1364
 #if !defined(ATTR_NO_UNIQUE_ADDRESS)
-#  if defined(_MSC_VER) && defined(_MSVC_LANG) && _MSVC_LANG >= 202002L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(msvc::no_unique_address)
+#  if defined(_MSC_VER) && NEARGYE_ATTR_CPLUSPLUS >= 202002L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(msvc::no_unique_address)
 #    define ATTR_NO_UNIQUE_ADDRESS [[msvc::no_unique_address]]
-#  elif ((defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L) && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(no_unique_address) >= 201803L
+#  elif NEARGYE_ATTR_CPLUSPLUS >= 202002L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(no_unique_address) >= 201803L
 #    define ATTR_NO_UNIQUE_ADDRESS [[no_unique_address]]
 #  else
 #    define ATTR_NO_UNIQUE_ADDRESS

@@ -62,7 +62,17 @@
 #include <exception>
 #include <type_traits>
 
-#if !defined(_MSC_VER) && __cplusplus < 201703L && defined(__GXX_ABI_VERSION) && (defined(__clang__) || defined(__GNUC__))
+// std::uncaught_exceptions() is preferred whenever the standard library provides it; older GCC-compatible
+// toolchains fall back to the Itanium C++ ABI exception globals.
+#if defined(__cpp_lib_uncaught_exceptions) || (defined(_MSC_VER) && _MSC_VER >= 1900) || __cplusplus >= 201703L
+#  define NEARGYE_STATE_SAVER_STD_UNCAUGHT_EXCEPTIONS
+#elif defined(__GXX_ABI_VERSION) && (defined(__clang__) || defined(__GNUC__))
+#  define NEARGYE_STATE_SAVER_CXXABI_UNCAUGHT_EXCEPTIONS
+#else
+#  error state_saver requires std::uncaught_exceptions() or a GCC-compatible Itanium C++ ABI.
+#endif
+
+#if defined(NEARGYE_STATE_SAVER_CXXABI_UNCAUGHT_EXCEPTIONS)
 namespace __cxxabiv1 {
 struct __cxa_eh_globals;
 extern "C" __cxa_eh_globals* __cxa_get_globals() noexcept;
@@ -97,16 +107,15 @@ namespace detail {
 #  define NEARGYE_STATE_SAVER_CATCH
 #endif
 
-#if (defined(_MSC_VER) && _MSC_VER >= 1900) || __cplusplus >= 201703L
+#if defined(NEARGYE_STATE_SAVER_STD_UNCAUGHT_EXCEPTIONS)
 inline int uncaught_exceptions() noexcept {
   return std::uncaught_exceptions();
 }
-#elif defined(__GXX_ABI_VERSION) && (defined(__clang__) || defined(__GNUC__))
+#else
 inline int uncaught_exceptions() noexcept {
+  // __cxa_eh_globals layout: { __cxa_exception* caughtExceptions; unsigned int uncaughtExceptions; }.
   return static_cast<int>(*reinterpret_cast<const unsigned int*>(reinterpret_cast<const char*>(::__cxxabiv1::__cxa_get_globals()) + sizeof(void*)));
 }
-#else
-#  error state_saver requires std::uncaught_exceptions() or a GCC-compatible Itanium C++ ABI.
 #endif
 
 class on_exit_policy {
@@ -240,6 +249,8 @@ class state_saver {
 #undef NEARGYE_STATE_SAVER_NOEXCEPT
 #undef NEARGYE_STATE_SAVER_TRY
 #undef NEARGYE_STATE_SAVER_CATCH
+#undef NEARGYE_STATE_SAVER_STD_UNCAUGHT_EXCEPTIONS
+#undef NEARGYE_STATE_SAVER_CXXABI_UNCAUGHT_EXCEPTIONS
 
 } // namespace nstd::detail
 
@@ -276,27 +287,27 @@ saver_success(U&) -> saver_success<U>;
 
 // NEARGYE_STATE_SAVER_MAYBE_UNUSED suppresses compiler warnings on unused entities, if any.
 #if !defined(NEARGYE_STATE_SAVER_MAYBE_UNUSED)
-#  if defined(__clang__)
-#    if (__clang_major__ * 10 + __clang_minor__) >= 39 && __cplusplus >= 201703L
-#      define NEARGYE_STATE_SAVER_MAYBE_UNUSED [[maybe_unused]]
-#    else
-#      define NEARGYE_STATE_SAVER_MAYBE_UNUSED __attribute__((__unused__))
-#    endif
-#  elif defined(__GNUC__)
-#    if __GNUC__ >= 7 && __cplusplus >= 201703L
-#      define NEARGYE_STATE_SAVER_MAYBE_UNUSED [[maybe_unused]]
-#    else
-#      define NEARGYE_STATE_SAVER_MAYBE_UNUSED __attribute__((__unused__))
-#    endif
+#  if defined(__has_cpp_attribute)
+#    define NEARGYE_STATE_SAVER_HAS_CPP_ATTRIBUTE(x) __has_cpp_attribute(x)
+#  else
+#    define NEARGYE_STATE_SAVER_HAS_CPP_ATTRIBUTE(x) 0
+#  endif
+#  if defined(_MSVC_LANG)
+#    define NEARGYE_STATE_SAVER_CPLUSPLUS _MSVC_LANG
+#  else
+#    define NEARGYE_STATE_SAVER_CPLUSPLUS __cplusplus
+#  endif
+#  if NEARGYE_STATE_SAVER_CPLUSPLUS >= 201703L && NEARGYE_STATE_SAVER_HAS_CPP_ATTRIBUTE(maybe_unused)
+#    define NEARGYE_STATE_SAVER_MAYBE_UNUSED [[maybe_unused]]
+#  elif defined(__clang__) || defined(__GNUC__)
+#    define NEARGYE_STATE_SAVER_MAYBE_UNUSED __attribute__((__unused__))
 #  elif defined(_MSC_VER)
-#    if _MSC_VER >= 1911 && defined(_MSVC_LANG) && _MSVC_LANG >= 201703L
-#      define NEARGYE_STATE_SAVER_MAYBE_UNUSED [[maybe_unused]]
-#    else
-#      define NEARGYE_STATE_SAVER_MAYBE_UNUSED __pragma(warning(suppress : 4100 4101 4189))
-#    endif
+#    define NEARGYE_STATE_SAVER_MAYBE_UNUSED __pragma(warning(suppress : 4100 4101 4189))
 #  else
 #    define NEARGYE_STATE_SAVER_MAYBE_UNUSED
 #  endif
+#  undef NEARGYE_STATE_SAVER_HAS_CPP_ATTRIBUTE
+#  undef NEARGYE_STATE_SAVER_CPLUSPLUS
 #endif
 
 #if !defined(NEARGYE_STATE_SAVER_STR_CONCAT)

@@ -387,6 +387,8 @@ TEST_CASE("move helpers preserve intended reference categories") {
   static_assert(can_forward_rvalue<int>::value, "forward<int> must accept an rvalue.");
   static_assert(!can_forward_rvalue<int&>::value, "forward<int&> must reject an rvalue through SFINAE.");
   static_assert(std::is_same<decltype(nstd::unforward(std::declval<const int&>())), int>::value, "scalar prvalues discard top-level const.");
+  static_assert(std::is_same<decltype(nstd::unforward(std::declval<const std::string&>())), std::string>::value, "unforward must not return a const-qualified class prvalue.");
+  static_assert(std::is_same<decltype(nstd::unforward(std::declval<volatile int&>())), int>::value, "unforward must drop volatile from the materialized value.");
   static_assert(can_unforward<explicit_materializable&>::value, "unforward must use direct construction.");
   static_assert(can_decay_copy<explicit_materializable&>::value, "decay_copy must use direct construction.");
   static_assert(!can_unforward<int (&)[2]>::value, "unforward must reject non-materializable arrays.");
@@ -649,7 +651,56 @@ TEST_CASE("constexpr_for iterates over the requested range") {
     return value;
   }();
 
+  constexpr int large_count = [] {
+    int count = 0;
+    nstd::constexpr_for<0, 1024, 1>([&count](auto) {
+      ++count;
+    });
+    return count;
+  }();
+  constexpr int crossing_sum = [] {
+    int value = 0;
+    nstd::constexpr_for<static_cast<signed char>(-100),
+                        static_cast<signed char>(100),
+                        static_cast<signed char>(50)>([&value](auto index) {
+      value += index;
+    });
+    return value;
+  }();
+  constexpr auto extreme = [] {
+    struct result {
+      int count;
+      long long last;
+    } summary{0, 0};
+    nstd::constexpr_for<(std::numeric_limits<long long>::min)(),
+                        (std::numeric_limits<long long>::max)(),
+                        (std::numeric_limits<long long>::max)()>([&summary](auto index) {
+      ++summary.count;
+      summary.last = index;
+    });
+    return summary;
+  }();
+  constexpr auto unsigned_extreme = [] {
+    struct result {
+      int count;
+      unsigned long long last;
+    } summary{0, 0};
+    nstd::constexpr_for<(std::numeric_limits<unsigned long long>::max)() - 5ull,
+                        (std::numeric_limits<unsigned long long>::max)(),
+                        2ull>([&summary](auto index) {
+      ++summary.count;
+      summary.last = index;
+    });
+    return summary;
+  }();
+
   static_assert(negative_sum == -3, "constexpr_for must support negative starts.");
+  static_assert(large_count == 1024, "constexpr_for must not be limited by the template instantiation depth.");
+  static_assert(crossing_sum == -100, "constexpr_for must cross zero with narrow signed parameters.");
+  static_assert(extreme.count == 3, "constexpr_for must count iterations without overflowing the parameter type.");
+  static_assert(extreme.last == (std::numeric_limits<long long>::max)() - 1, "constexpr_for must compute extreme signed values exactly.");
+  static_assert(unsigned_extreme.count == 3, "constexpr_for must count iterations near the unsigned maximum.");
+  static_assert(unsigned_extreme.last == (std::numeric_limits<unsigned long long>::max)() - 1, "constexpr_for must compute extreme unsigned values exactly.");
   static_assert(overflow_safe_count == 1, "constexpr_for must stop without overflowing Start + Inc.");
   static_assert(narrow_sum == 6, "constexpr_for must preserve narrow integral parameter types.");
   static_assert(can_constexpr_for<0, 1, 1, only_zero_callable>::value, "callable valid for every iteration must be accepted.");
@@ -673,9 +724,13 @@ TEST_CASE("constexpr_for iterates over the requested range") {
   CHECK(negative_sum == -3);
   CHECK(overflow_safe_count == 1);
   CHECK(narrow_sum == 6);
+  CHECK(large_count == 1024);
+  CHECK(crossing_sum == -100);
+  CHECK(extreme.count == 3);
+  CHECK(unsigned_extreme.count == 3);
 }
 
-TEST_CASE("constexpr_for recursion ignores unrelated ADL overloads") {
+TEST_CASE("constexpr_for ignores unrelated ADL overloads") {
   constexpr int sum = [] {
     int value = 0;
     nstd::constexpr_for<0, 4, 1>(constexpr_for_adl_test::callback{value});

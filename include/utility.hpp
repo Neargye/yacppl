@@ -31,8 +31,10 @@
 #define NEARGYE_NSTD_UTILITY_HPP
 
 #include <array>
+#include <cstddef>
 #include <cstring>
 #include <functional>
+#include <initializer_list>
 #include <limits>
 #include <memory>
 #include <tuple>
@@ -112,6 +114,33 @@ using require_integral_t = std::enable_if_t<is_standard_integer_v<T>, int>;
 template <typename T, typename U>
 using require_integral_pair_t = std::enable_if_t<is_standard_integer_v<T> && is_standard_integer_v<U>, int>;
 
+template <typename T>
+using unforward_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
+template <typename T>
+constexpr unsigned long long constexpr_for_count(T start, T end, T inc) noexcept {
+  if (!(start < end)) {
+    return 0;
+  }
+  // 0 < end - start fits in unsigned long long, so the modular difference is exact.
+  const unsigned long long distance = static_cast<unsigned long long>(end) - static_cast<unsigned long long>(start);
+  return (distance - 1) / static_cast<unsigned long long>(inc) + 1;
+}
+
+template <typename T>
+constexpr T constexpr_for_value(T start, T inc, std::size_t index) noexcept {
+  // index * inc < end - start, so the offset fits in unsigned long long.
+  const unsigned long long offset = static_cast<unsigned long long>(index) * static_cast<unsigned long long>(inc);
+  if constexpr (std::is_signed_v<T>) {
+    if (start < T{} && offset < 0ull - static_cast<unsigned long long>(start)) {
+      // Negative result: offset < -start, so it fits in T and the sum cannot overflow.
+      return static_cast<T>(start + static_cast<T>(offset));
+    }
+  }
+  // Non-negative result that does not exceed the maximum of T.
+  return static_cast<T>(static_cast<unsigned long long>(start) + offset);
+}
+
 template <auto Start, auto End, auto Inc,
           bool = std::is_integral_v<decltype(Start)> &&
                  !std::is_same_v<decltype(Start), bool> &&
@@ -120,12 +149,8 @@ template <auto Start, auto End, auto Inc,
 struct is_valid_constexpr_for_range : std::false_type {};
 
 template <auto Start, auto End, auto Inc>
-struct is_valid_constexpr_for_range<Start, End, Inc, true> : std::bool_constant<(Inc > 0)> {};
-
-template <typename T>
-constexpr bool can_increment_constexpr_for(T value, T increment) noexcept {
-  return value <= (std::numeric_limits<T>::max)() - increment;
-}
+struct is_valid_constexpr_for_range<Start, End, Inc, true>
+    : std::bool_constant<(Inc > 0) && constexpr_for_count(Start, End, Inc) <= (std::numeric_limits<std::size_t>::max)()> {};
 
 template <typename F, typename I, typename = void>
 struct is_constexpr_for_callable : std::false_type {};
@@ -133,25 +158,37 @@ struct is_constexpr_for_callable : std::false_type {};
 template <typename F, typename I>
 struct is_constexpr_for_callable<F, I, std::void_t<decltype(std::declval<F&>()(std::declval<I>()))>> : std::true_type {};
 
-template <auto Start, auto End, auto Inc, typename F, bool Done = !(Start < End), bool CanIncrement = can_increment_constexpr_for(Start, Inc)>
+// Braced-init-list expansions are used instead of fold expressions, which Clang limits to 256 operands.
+constexpr bool constexpr_for_all_of(std::initializer_list<bool> values) noexcept {
+  for (const bool value : values) {
+    if (!value) {
+      return false;
+    }
+  }
+  return true;
+}
+
+template <auto Start, auto Inc, typename F, typename Indices>
 struct is_constexpr_for_invocable;
 
-template <auto Start, auto End, auto Inc, typename F, bool CanIncrement>
-struct is_constexpr_for_invocable<Start, End, Inc, F, true, CanIncrement> : std::true_type {};
-
-template <auto Start, auto End, auto Inc, typename F>
-struct is_constexpr_for_invocable<Start, End, Inc, F, false, false> : is_constexpr_for_callable<F, std::integral_constant<decltype(Start), Start>> {};
-
-template <auto Start, auto End, auto Inc, typename F>
-struct is_constexpr_for_invocable<Start, End, Inc, F, false, true>
-    : std::conjunction<is_constexpr_for_callable<F, std::integral_constant<decltype(Start), Start>>,
-                       is_constexpr_for_invocable<static_cast<decltype(Start)>(Start + Inc), End, Inc, F>> {};
+template <auto Start, auto Inc, typename F, std::size_t... I>
+struct is_constexpr_for_invocable<Start, Inc, F, std::index_sequence<I...>>
+    : std::bool_constant<constexpr_for_all_of({true, is_constexpr_for_callable<F, std::integral_constant<decltype(Start), constexpr_for_value(Start, Inc, I)>>::value...})> {};
 
 template <auto Start, auto End, auto Inc, typename F, bool = is_valid_constexpr_for_range<Start, End, Inc>::value>
 struct constexpr_for_traits : std::false_type {};
 
 template <auto Start, auto End, auto Inc, typename F>
-struct constexpr_for_traits<Start, End, Inc, F, true> : is_constexpr_for_invocable<Start, End, Inc, F> {};
+struct constexpr_for_traits<Start, End, Inc, F, true>
+    : is_constexpr_for_invocable<Start, Inc, F, std::make_index_sequence<static_cast<std::size_t>(constexpr_for_count(Start, End, Inc))>> {
+  using indices = std::make_index_sequence<static_cast<std::size_t>(constexpr_for_count(Start, End, Inc))>;
+};
+
+template <auto Start, auto Inc, typename F, std::size_t... I>
+constexpr void constexpr_for_impl(F& f, std::index_sequence<I...>) {
+  const int expansion[] = {0, (static_cast<void>(f(std::integral_constant<decltype(Start), constexpr_for_value(Start, Inc, I)>{})), 0)...};
+  static_cast<void>(expansion);
+}
 
 template <typename T>
 using bit_cast_return_source_t = std::conditional_t<std::is_trivially_copy_constructible_v<T>, const T&, T&&>;
@@ -188,9 +225,9 @@ template <typename T, std::enable_if_t<!std::is_lvalue_reference_v<T>, int> = 0>
   return static_cast<T&&>(t);
 }
 
-template <typename T, std::enable_if_t<std::is_constructible_v<std::remove_reference_t<T>, T&&>, int> = 0>
-[[nodiscard]] constexpr auto unforward(T&& t) noexcept(std::is_nothrow_constructible_v<std::remove_reference_t<T>, T&&>) -> std::remove_reference_t<T> {
-  return std::remove_reference_t<T>(::nstd::forward<T>(t));
+template <typename T, std::enable_if_t<std::is_constructible_v<detail::unforward_t<T>, T&&>, int> = 0>
+[[nodiscard]] constexpr auto unforward(T&& t) noexcept(std::is_nothrow_constructible_v<detail::unforward_t<T>, T&&>) -> detail::unforward_t<T> {
+  return detail::unforward_t<T>(::nstd::forward<T>(t));
 }
 
 template <typename T, std::enable_if_t<std::is_constructible_v<std::decay_t<T>, T&&>, int> = 0>
@@ -275,13 +312,7 @@ template <typename R, typename T, detail::require_integral_t<R> = 0, detail::req
 // https://artificial-mind.net/blog/2020/10/31/constexpr-for
 template <auto Start, auto End, auto Inc, typename F, std::enable_if_t<detail::constexpr_for_traits<Start, End, Inc, F>::value, int> = 0>
 constexpr void constexpr_for(F&& f) {
-  if constexpr (Start < End) {
-    static_cast<void>(f(std::integral_constant<decltype(Start), Start>{}));
-    if constexpr (detail::can_increment_constexpr_for(Start, Inc)) {
-      constexpr auto Next = static_cast<decltype(Start)>(Start + Inc);
-      ::nstd::constexpr_for<Next, End, Inc>(std::forward<F>(f));
-    }
-  }
+  detail::constexpr_for_impl<Start, Inc>(f, typename detail::constexpr_for_traits<Start, End, Inc, F>::indices{});
 }
 
 } // namespace nstd

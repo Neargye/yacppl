@@ -8,6 +8,7 @@
 #include <doctest.h>
 
 #include <stdexcept>
+#include <type_traits>
 
 struct empty_type {};
 
@@ -73,6 +74,9 @@ struct condition_without_negation {
 };
 
 TEST_CASE("branch hints preserve boolean conversion and evaluate once") {
+  static_assert(std::is_same<decltype(ATTR_LIKELY(true)), bool>::value, "ATTR_LIKELY must yield bool on every compiler.");
+  static_assert(std::is_same<decltype(ATTR_UNLIKELY(true)), bool>::value, "ATTR_UNLIKELY must yield bool on every compiler.");
+
   int conversions = 0;
   int negations = 0;
   branch_condition condition{true, conversions, negations};

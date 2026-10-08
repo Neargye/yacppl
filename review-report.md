@@ -7,12 +7,14 @@
 | Fix commits | `68b522b` fix attributes: annotate ATTR_FALLTHROUGH in C++98; `fcedabb` fix bytes: value-initialize in from_bytes<T> |
 | Toolchains | g++ 13.3.0, clang++ 18.1.3 (libstdc++ 13), cmake 3.28.3, ninja 1.11.1 — Linux cloud container |
 | Not available | MSVC, ClangCL, AppleClang, libc++/libc++abi, Clang sanitizer runtimes and libFuzzer, GCC ≥ 14, Clang ≥ 19, 32-bit multilib |
-| Process | C++ review runbook: profile → analytical review (30 hypotheses) ∥ empirical checks (51 checks) → verdicts and fixes → acceptance |
+| Process | C++ review runbook: profile → analytical review (30 hypotheses) ∥ empirical checks (51 checks) → verdicts and fixes → acceptance → review CI (7 jobs, `2dd1925`) |
+| Review CI | [run 37813288959](https://github.com/Neargye/yacppl/actions/runs/37813288959): macOS AppleClang, Clang 20 + libc++ + ASan/UBSan, GCC 14, GCC -m32, MSVC x64, MSVC x86, ClangCL — all green |
 
 ## Summary
 
-- **Hypotheses:** 30 (bug 4, portability 12, compile-time 2, quality 12); 31 verdict rows (H14 split):
-  CONFIRMED 23, FORMAL 2, REFUTED 2, NOT CHECKED 4 (+ H14a on a real libc++abi).
+- **Hypotheses:** 30 (bug 4, portability 12, compile-time 2, quality 12); 31 verdict rows (H14 split).
+  After review CI: CONFIRMED 23 (H3 confirmed by CI; H14a moved to REFUTED), FORMAL 2, REFUTED 6
+  (H7, H8, H14a, H14b, H15, plus H10 on the tested libraries), NOT CHECKED 0.
 - **Empirical checks:** 51 — 42 passed, 3 failed (all in `attributes.hpp`), 3 informational, 3 impossible
   in this environment. Test runs: ctest 5 configurations × 24 = 120/120, manual matrix 36 configurations
   497/497, examples 78/78, randomized differential test 41.5 M iterations with 0 mismatches.
@@ -21,8 +23,11 @@
   `unforward` const, `CATCH_HANDLER` without SUPPRESS, C++11 examples, README notes.
 - **No problems found** in `concepts`, `type_traits`, `state_saver` runtime behavior, `cmp_*`/`in_range`,
   `forward_like`, `move*`, `bit_cast`, `byte` operators — all match `std::*` on the tested inputs.
-- **Main unverified risk:** `uncaught_exceptions()` via `__cxa_get_globals` + fixed offset on libc++abi
-  (macOS, Clang + libc++) in C++11/14 — only CI can cover it (macOS job builds C++11/14 tests).
+- **Main risk closed by review CI:** the pre-C++17 `uncaught_exceptions()` via `__cxa_get_globals` + fixed
+  offset returns the correct count on libc++abi (macOS AppleClang, Clang 20 + libc++) and on 32-bit
+  libstdc++ (probe R1, C++11/14, nested unwinding and `SAVER_FAIL`).
+- **New confirmation from review CI:** `ATTR_ASSUME` stops compiling inside an expression in C++23 on
+  GCC 14 and Clang 20 (H3) — strengthens Q2.
 
 ## Fixes
 
@@ -62,7 +67,7 @@ on GCC and Clang; everything else builds.
 | Item | Reason | Decision |
 |---|---|---|
 | H1 `ATTR_LIKELY`/`ATTR_UNLIKELY` have type `long` on GCC/Clang | changes the type of a public macro | D2, Q1 |
-| H2/H3 `ATTR_ASSUME` is a no-op on GCC | a full fix turns an expression into a statement; fixing only GCC 13 `-std=c++2b` is a half-measure | D3, Q2 |
+| H2/H3 `ATTR_ASSUME` is a no-op on GCC; expression vs statement differs between C++20 and C++23 (confirmed by review CI) | a full fix turns an expression into a statement; fixing only GCC 13 `-std=c++2b` is a half-measure | D3, D19, Q2 |
 | Empirical problem 2 / H5 `ATTR_NODISCARD` on GCC C++11/14 | would reverse the owner's decision in 96cf183 | D4, Q3 |
 | H6 `ATTR_NO_UNIQUE_ADDRESS` layout depends on `-std` | deliberate gating | D5 |
 | H9 `NSTD_UNUSED` in a lambda capture | the macro intentionally does not evaluate its arguments | D7 |
@@ -75,7 +80,7 @@ on GCC and Clang; everything else builds.
 | H17 dead sub-condition in a `static_assert` | no observable effect, no failing test possible | D12 |
 | H11, H12, H16, H23, H28, H29 | design | D9 |
 | H13, H21 | formal only | D10 |
-| H7, H8, H10, H14a, H15 | toolchain not available | D6, D8, D11 |
+| H7, H8, H10, H14a, H15 | refuted or not reproducible (review CI and container) | D6, D8, D11, D19 |
 
 ## Questions for the owner
 
@@ -83,6 +88,9 @@ on GCC and Clang; everything else builds.
   `static_cast<bool>(__builtin_expect(static_cast<bool>(x), 1))`.
 - **Q2.** `ATTR_ASSUME` on GCC: (a) treat C++23 drafts as C++23 (`> 202002L`) — fixes only GCC 13 `-std=c++2b`;
   (b) GCC `__attribute__((__assume__(e)))` in all modes + "statement only" in README; (c) document the no-op.
+  Review CI adds: the macro already changes from an expression to a statement in C++23 on GCC 14 and
+  Clang 20 (`(ATTR_ASSUME(c), x)` fails to compile), so code valid in C++20 breaks in C++23 (H3).
+  Whatever the choice, README should say "use as a statement only".
 - **Q3.** `ATTR_NODISCARD` before C++17 on GCC: keep `__warn_unused_result__` (where `(void)` does not silence it
   and it warns on types), switch to `[[nodiscard]]`, or document the limitation?
 - **Q4.** Is it intended that `unforward` keeps `const` on class prvalues (blocks moves: 2 copies, 0 moves)?
@@ -105,6 +113,29 @@ on GCC and Clang; everything else builds.
 **CI:** no extension is required for the fixed issues — the new ctest target and `byte_test` run in all three
 workflows. Optional: one Ubuntu GCC ASan+UBSan job; one GCC C++23 job if Q2 (a) or (b) is accepted.
 Workflow files are unchanged.
+
+## Review CI
+
+Temporary workflow `.github/workflows/review.yml` and probes in `review/probes/` (commit `2dd1925`, review branch only).
+Each probe states the hypothesis' prediction; `run.py` compares it with the actual outcome.
+Run: https://github.com/Neargye/yacppl/actions/runs/37813288959 — 7/7 jobs green; project build + ctest green in every job.
+
+| Job | Project build + ctest | Probes |
+|---|---|---|
+| macos-appleclang (libc++abi) | green | H14a build-ok (c++11/14); R1 ok (c++11/14) |
+| clang20-libcxx (Clang 20, libc++ 20, ASan+UBSan) | green | H3: c++17 ok, c++23 build-fail; P1: c++17 `__builtin_assume(x)`, c++23 `[[assume(x)]]`; H10 c++2c build-ok; H14a build-ok; R1 ok |
+| gcc14 | green | H3: c++17 ok, c++23 build-fail; P1: c++17 `static_cast<void>(0)` (no-op), c++23 `[[assume(x)]]`; H10 c++2c build-ok; H14a build-ok; R1 ok |
+| gcc-m32 | green | H14a build-ok; R1 ok (32-bit `__cxa_eh_globals` offset correct) |
+| msvc-x64 | green | H7: c++14 build-ok (no C4100), c++17 ok; H8: no LNK2005; P1: `__assume(x)` in c++17 and c++latest (`_MSVC_LANG` 202400) |
+| msvc-x86 | green | H8: no LNK2005 |
+| clangcl | green | H8: no LNK2005; P1: `__assume(x)` (c++latest reports `_MSVC_LANG` 202004) |
+
+Conclusions:
+- **R1 / profile risk 1 closed:** the pre-C++17 `uncaught_exceptions()` fallback is correct on libstdc++ (64- and 32-bit) and libc++abi (macOS, Linux).
+- **H3 confirmed:** `ATTR_ASSUME` is an expression before C++23 and a statement in C++23 on GCC 14 and Clang 20 → Q2.
+- **Empirical problem 1 bounded:** on GCC 14 `ATTR_ASSUME` works in C++23 (`[[assume]]`) but remains a no-op before C++23; GCC 13 is a no-op in every mode.
+- **H7, H8, H14a refuted; H10** not reproducible with libstdc++ 14 and libc++ 20.
+- **F1 on MSVC/ClangCL:** the new `yacppl-attributes-cpp98.t` target builds and passes on MSVC x64/x86 and ClangCL (default standard), and in the existing windows/macos/ubuntu workflows.
 
 ## Decisions
 
@@ -130,6 +161,7 @@ Decisions from this and earlier reviews. Later reviews do not re-propose them wi
 | D16 | compile-time limits left as is: Clang fold limit 256 for `invoke_each`/`apply_each` (H25), `constexpr_for` max N=447 (GCC) / 507 (Clang) (H26) | no minimal reliable fix: every fold and the recursive trait would need rewriting; documentation note suggested | include/utility.hpp:47-80,136-154,276-285; H25/H26 |
 | D17 | `unforward(const T&)` returns a `const T` prvalue for class types (H27) | intent unknown (the test locks only the scalar case) — owner question | include/utility.hpp:191-194; utility_test.cpp:389; Q4 |
 | D18 | examples with `cxx_std_11` are built with `-std=c++17` by CMake (H30) | `target_compile_features` is a minimum by design; changing to `CXX_STANDARD 11` is a build-policy decision; C++11/14 example builds verified manually | example/CMakeLists.txt:22-39; empirical row 18, H30; Q6 |
+| D19 | Review CI (run 37813288959) supersedes the "not checked" parts of D6, D8 and D11: H7, H8 and H14a are refuted, H10 does not reproduce with libstdc++ 14 / libc++ 20; H3 is confirmed and joins Q2 | checked on MSVC x64/x86, ClangCL, AppleClang/libc++abi, Clang 20 + libc++, GCC 14, GCC -m32 | review/probes/*, .github/workflows/review.yml (review branch only) |
 
 ## Hypothesis verdicts
 
@@ -140,19 +172,19 @@ FORMAL — formal violation without observable effect; NOT CHECKED — toolchain
 |---|---|---|---|---|
 | H1 `ATTR_LIKELY/UNLIKELY` have type `long` | attributes.hpp:158,167 / portability | CONFIRMED | `bool b{ATTR_LIKELY(c)}` → narrowing error from `long int` | same |
 | H2 `ATTR_ASSUME` is a no-op on GCC | attributes.hpp:108-117 / portability | CONFIRMED | expands to `static_cast<void>(0)` in c++11/17/20/2b | `__builtin_assume` in every mode |
-| H3 `ATTR_ASSUME` is a statement in C++23, an expression otherwise | attributes.hpp:110 / portability | NOT CHECKED (needs GCC ≥ 14 / Clang ≥ 19) | no-op branch selected | `__builtin_assume` |
+| H3 `ATTR_ASSUME` is a statement in C++23, an expression otherwise | attributes.hpp:110 / portability | CONFIRMED by review CI (GCC 14, Clang 20) | GCC 14 c++23: `attributes.hpp:121:32: error: expected identifier before '[' token`; c++17 ok | Clang 20 c++23: `error: expected variable name or 'this' in lambda capture list`; c++17 ok |
 | H4 `ATTR_FALLTHROUGH` empty in C++98 | attributes.hpp:95-105 / portability | CONFIRMED → **fixed (F1)** | c++98 error, c++11 ok | c++98 error, c++11 ok |
 | H5 `ATTR_NODISCARD` on types in C++11/14 | attributes.hpp:121-131 / portability | CONFIRMED for GCC; MSVC not checked | `-Werror=attributes` in c++11/14 | ok in every mode |
 | H6 `ATTR_NO_UNIQUE_ADDRESS` only from C++20 | attributes.hpp:186-194 / portability | CONFIRMED (layout depends on `-std`) | sizeof 8/8/4 (c++11/17/20) | 8/8/4 |
-| H7 MSVC `warning(suppress)` and multi-line functions | attributes.hpp:149 / portability | NOT CHECKED (no MSVC) | — | — |
-| H8 `__forceinline` without `inline` | attributes.hpp:85-86 / portability | NOT CHECKED (no MSVC) | — | — |
+| H7 MSVC `warning(suppress)` and multi-line functions | attributes.hpp:149 / portability | REFUTED by review CI | — | MSVC x64 `/W4 /WX` c++14 (fallback branch): builds, no C4100 |
+| H8 `__forceinline` without `inline` | attributes.hpp:85-86 / portability | REFUTED by review CI | — | MSVC x64, MSVC x86, ClangCL, c++14/17: header definition in two TUs links, no LNK2005 |
 | H9 `NSTD_UNUSED` on a lambda capture | unused.hpp:46 / quality | CONFIRMED on Clang | ok | `-Wunused-lambda-capture` |
-| H10 `std::is_trivial` deprecated in C++26 | concepts.hpp:169 / portability | NOT CHECKED (needs libstdc++ ≥ 15 / libc++ ≥ 20) | — | — |
+| H10 `std::is_trivial` deprecated in C++26 | concepts.hpp:169 / portability | REFUTED on the tested libraries (review CI) | GCC 14 / libstdc++ 14, c++2c `-Werror`: builds | Clang 20 / libc++ 20, c++2c `-Werror`: builds |
 | H11 category aliases strip references | concepts.hpp / quality | CONFIRMED (behavior), design | `Object<int&>` = `int&` | same |
 | H12 `is_same_signedness` on bool/enum/char | type_traits.hpp:233 / quality | CONFIRMED (behavior), design | `<bool, unsigned>` = true; enums false | same |
 | H13 ODR across TUs with different `-std` | type_traits.hpp / quality | FORMAL | `-flto -Wodr` silent, correct result | — |
-| H14a `__cxa_get_globals() noexcept` vs `<cxxabi.h>` | state_saver.hpp:65-69 / portability | CONFIRMED on a mock; real libc++abi not checked | c++11/14 exception-spec mismatch on a mock | same |
-| H14b `__cxa_get_globals` path in gnu++11/14 | state_saver.hpp:104-107 / portability | REFUTED | equals `std::uncaught_exceptions()` | same |
+| H14a `__cxa_get_globals() noexcept` vs `<cxxabi.h>` | state_saver.hpp:65-69 / portability | REFUTED by review CI (conflict existed only on a mock) | GCC 14, GCC -m32: `<cxxabi.h>` + state_saver builds in c++11/14 | macOS AppleClang (libc++abi), Clang 20 + libc++abi 20: builds in c++11/14 |
+| H14b `__cxa_get_globals` path in gnu++11/14 | state_saver.hpp:104-107 / portability | REFUTED (container) + review CI probe R1 | equals `std::uncaught_exceptions()`; R1 ok on GCC 14 and GCC -m32 | R1 ok on macOS AppleClang (libc++abi) and Clang 20 + libc++ (ASan/UBSan) |
 | H15 `-fno-exceptions` and `__cxa_get_globals` | state_saver.hpp:104-107 / portability | REFUTED on libstdc++ | builds and runs | same |
 | H16 pointers rejected, member pointers accepted | state_saver.hpp:182-183 / quality | CONFIRMED (behavior), design | as described | same |
 | H17 dead part of a static_assert condition | state_saver.hpp:178 / quality | CONFIRMED (logically) | equivalent on 14 types | — |
@@ -246,10 +278,10 @@ FORMAL — formal violation without observable effect; NOT CHECKED — toolchain
   NO_UNIQUE_ADDRESS from C++20, ASSUME always a no-op; Clang — TRIVIAL_ABI `[[clang::trivial_abi]]`, ASSUME
   `__builtin_assume` in every mode.
 
-### Not verified
+### Not verified in the container (see Review CI for what CI closed)
 
-- MSVC / ClangCL / AppleClang / libc++: real `windows.h` test, `_MSVC_LANG` branches, `msvc::no_unique_address`,
-  `__forceinline`, `__assume`, the `__cxa_get_globals` path on libc++abi and its `noexcept` declaration vs
-  libc++abi's `<cxxabi.h>`.
-- 32-bit builds; libFuzzer and sanitizers on Clang; GCC `-std=c++2c`; the positive `[[assume]]` branch
-  (no compiler on the machine selects it); compiler-version boundaries (one GCC and one Clang only).
+- Closed by review CI: MSVC x64/x86, ClangCL, AppleClang/libc++abi, Clang 20 + libc++ with ASan/UBSan,
+  GCC 14, 32-bit; `__forceinline`, `warning(suppress)`, `__assume`, the `__cxa_get_globals` path and its
+  declaration; the positive `[[assume]]` branch (GCC 14 and Clang 20 in C++23).
+- Still not verified: libFuzzer; GCC ≥ 15 / libstdc++ ≥ 15 (H10); `msvc::no_unique_address` layout;
+  compiler-version boundaries below the CI versions.

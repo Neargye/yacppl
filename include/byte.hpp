@@ -163,7 +163,8 @@ auto to_bytes(byte* dst, const T (&src)[N]) noexcept -> detail::enable_if_byte_s
 template <typename T>
 [[nodiscard]] auto from_bytes(const byte* src) noexcept(std::is_nothrow_default_constructible_v<T> && std::is_nothrow_constructible_v<T, detail::byte_return_source_t<T>>) -> detail::enable_if_byte_return_t<T> {
   assert(src != nullptr && "nstd::from_bytes requires src is not null");
-  T dst{};
+  // Value-initialize as checked by std::is_default_constructible_v; T{} can reject explicit default constructors of members.
+  T dst = T();
   if (src != nullptr) {
     static_cast<void>(std::memcpy(static_cast<void*>(std::addressof(dst)), src, sizeof(T)));
   }

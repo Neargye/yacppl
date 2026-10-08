@@ -106,6 +106,15 @@ struct explicit_throwing_return_payload {
   explicit explicit_throwing_return_payload(U&& other) noexcept(false) : value{other.value} {}
 };
 
+struct explicit_default_member {
+  explicit explicit_default_member() = default;
+};
+
+struct explicit_default_member_payload {
+  explicit_default_member member;
+  std::uint32_t value;
+};
+
 enum class payload_kind : std::uint16_t {
   data = 7
 };
@@ -175,6 +184,8 @@ static_assert(!std::is_nothrow_constructible<explicit_throwing_return_payload, e
 static_assert(std::is_convertible<explicit_throwing_return_payload&&, explicit_throwing_return_payload>::value, "implicit return construction must remain available through the copy constructor.");
 static_assert(can_from_bytes<explicit_throwing_return_payload>::value, "from_bytes<T> should accept an implicitly returnable type.");
 static_assert(noexcept(nstd::from_bytes<explicit_throwing_return_payload>(std::declval<const nstd::byte*>())), "from_bytes<T> must avoid the non-trivial rvalue constructor.");
+static_assert(std::is_default_constructible<explicit_default_member_payload>::value, "explicit_default_member_payload must be default constructible.");
+static_assert(can_from_bytes<explicit_default_member_payload>::value, "from_bytes<T> should accept a member with an explicit default constructor.");
 static_assert(!can_to_bytes<volatile std::uint32_t>::value, "to_bytes must reject volatile sources that memcpy cannot access.");
 static_assert(!can_from_bytes<const std::uint32_t>::value, "from_bytes<T> must reject const destinations.");
 static_assert(!can_from_bytes<volatile std::uint32_t>::value, "from_bytes<T> must reject volatile destinations.");
@@ -323,6 +334,9 @@ TEST_CASE("byte conversion helpers round-trip trusted object representations") {
   explicit_throwing_return_payload explicit_return_source;
   explicit_return_source.value = 89;
   const auto explicit_return = round_trip<explicit_throwing_return_payload>(explicit_return_source);
+  explicit_default_member_payload explicit_default_source;
+  explicit_default_source.value = 90;
+  const auto explicit_default = round_trip<explicit_default_member_payload>(explicit_default_source);
 
   CHECK(integer == -123456789);
   CHECK(floating == -123.5);
@@ -332,6 +346,7 @@ TEST_CASE("byte conversion helpers round-trip trusted object representations") {
   CHECK(custom_default.value == 0);
   CHECK(throwing_return.value == 88);
   CHECK(explicit_return.value == 89);
+  CHECK(explicit_default.value == 90);
 
   nonreturnable_payload original;
   original.value = 77;

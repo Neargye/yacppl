@@ -94,6 +94,11 @@ else()
     set(CPP11_FLAG c++11)
 endif()
 
+if(NOT MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    make_mode_test(${PROJECT_NAME}-attributes-cpp98.t attributes_cpp98_test.cpp c++98)
+    target_compile_options(${PROJECT_NAME}-attributes-cpp98.t PRIVATE -Wimplicit-fallthrough)
+endif()
+
 make_test(${PROJECT_NAME}-cpp11.t "${CPP11_FLAG}")
 make_mode_test(${PROJECT_NAME}-attributes.t attributes_test.cpp "${CPP11_FLAG}")
 make_mode_test(${PROJECT_NAME}-concepts.t concepts_test.cpp "${CPP11_FLAG}")

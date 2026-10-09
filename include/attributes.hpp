@@ -48,6 +48,15 @@
 #  define NEARGYE_ATTR_HAS_BUILTIN_DEFINED
 #endif
 
+#if !defined(NEARGYE_ATTR_HAS_ATTRIBUTE)
+#  if defined(__has_attribute)
+#    define NEARGYE_ATTR_HAS_ATTRIBUTE(x) __has_attribute(x)
+#  else
+#    define NEARGYE_ATTR_HAS_ATTRIBUTE(x) 0
+#  endif
+#  define NEARGYE_ATTR_HAS_ATTRIBUTE_DEFINED
+#endif
+
 #if defined(_MSVC_LANG)
 #  define NEARGYE_ATTR_CPLUSPLUS _MSVC_LANG
 #else
@@ -99,6 +108,8 @@
 #    define ATTR_FALLTHROUGH [[clang::fallthrough]];
 #  elif defined(__GNUC__) && __GNUC__ >= 7 && NEARGYE_ATTR_CPLUSPLUS >= 201103L
 #    define ATTR_FALLTHROUGH [[gnu::fallthrough]];
+#  elif (defined(__clang__) || defined(__GNUC__)) && NEARGYE_ATTR_HAS_ATTRIBUTE(fallthrough)
+#    define ATTR_FALLTHROUGH __attribute__((__fallthrough__));
 #  else
 #    define ATTR_FALLTHROUGH /*fallthrough*/
 #  endif
@@ -201,6 +212,11 @@
 #if defined(NEARGYE_ATTR_HAS_BUILTIN_DEFINED)
 #  undef NEARGYE_ATTR_HAS_BUILTIN
 #  undef NEARGYE_ATTR_HAS_BUILTIN_DEFINED
+#endif
+
+#if defined(NEARGYE_ATTR_HAS_ATTRIBUTE_DEFINED)
+#  undef NEARGYE_ATTR_HAS_ATTRIBUTE
+#  undef NEARGYE_ATTR_HAS_ATTRIBUTE_DEFINED
 #endif
 
 #undef NEARGYE_ATTR_CPLUSPLUS

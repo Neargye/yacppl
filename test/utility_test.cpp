@@ -387,6 +387,8 @@ TEST_CASE("move helpers preserve intended reference categories") {
   static_assert(can_forward_rvalue<int>::value, "forward<int> must accept an rvalue.");
   static_assert(!can_forward_rvalue<int&>::value, "forward<int&> must reject an rvalue through SFINAE.");
   static_assert(std::is_same<decltype(nstd::unforward(std::declval<const int&>())), int>::value, "scalar prvalues discard top-level const.");
+  static_assert(std::is_same<decltype(nstd::unforward(std::declval<const std::string&>())), std::string>::value, "class prvalues must discard const so they can be moved from.");
+  static_assert(std::is_same<decltype(nstd::unforward(std::declval<volatile int&>())), int>::value, "unforward must not return a volatile-qualified type.");
   static_assert(can_unforward<explicit_materializable&>::value, "unforward must use direct construction.");
   static_assert(can_decay_copy<explicit_materializable&>::value, "decay_copy must use direct construction.");
   static_assert(!can_unforward<int (&)[2]>::value, "unforward must reject non-materializable arrays.");
@@ -417,6 +419,14 @@ TEST_CASE("move and materialization helpers work with standard library types") {
   CHECK(nstd::decay_copy(text) == "saved");
   CHECK(nstd::unforward(std::string{"temporary"}) == "temporary");
   CHECK(nstd::decay_copy(std::string{"temporary"}) == "temporary");
+
+  const std::string const_text = "constant";
+  std::string target;
+  target = nstd::unforward(const_text);
+  CHECK(target == "constant");
+
+  volatile int volatile_value = 3;
+  CHECK(nstd::unforward(volatile_value) == 3);
 
   auto owner = std::make_unique<int>(7);
   auto result = nstd::unforward(std::move(owner));

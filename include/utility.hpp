@@ -188,9 +188,9 @@ template <typename T, std::enable_if_t<!std::is_lvalue_reference_v<T>, int> = 0>
   return static_cast<T&&>(t);
 }
 
-template <typename T, std::enable_if_t<std::is_constructible_v<std::remove_reference_t<T>, T&&>, int> = 0>
-[[nodiscard]] constexpr auto unforward(T&& t) noexcept(std::is_nothrow_constructible_v<std::remove_reference_t<T>, T&&>) -> std::remove_reference_t<T> {
-  return std::remove_reference_t<T>(::nstd::forward<T>(t));
+template <typename T, std::enable_if_t<std::is_constructible_v<std::remove_cv_t<std::remove_reference_t<T>>, T&&>, int> = 0>
+[[nodiscard]] constexpr auto unforward(T&& t) noexcept(std::is_nothrow_constructible_v<std::remove_cv_t<std::remove_reference_t<T>>, T&&>) -> std::remove_cv_t<std::remove_reference_t<T>> {
+  return std::remove_cv_t<std::remove_reference_t<T>>(::nstd::forward<T>(t));
 }
 
 template <typename T, std::enable_if_t<std::is_constructible_v<std::decay_t<T>, T&&>, int> = 0>

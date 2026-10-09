@@ -169,7 +169,7 @@
 // ATTR_LIKELY hints that the expression is true.
 #if !defined(ATTR_LIKELY)
 #  if defined(__clang__) || defined(__GNUC__)
-#    define ATTR_LIKELY(x) __builtin_expect(static_cast<bool>(x), 1)
+#    define ATTR_LIKELY(x) (__builtin_expect(static_cast<bool>(x), 1) != 0)
 #  else
 #    define ATTR_LIKELY(x) (static_cast<bool>(x))
 #  endif
@@ -178,7 +178,7 @@
 // ATTR_UNLIKELY hints that the expression is false.
 #if !defined(ATTR_UNLIKELY)
 #  if defined(__clang__) || defined(__GNUC__)
-#    define ATTR_UNLIKELY(x) __builtin_expect(static_cast<bool>(x), 0)
+#    define ATTR_UNLIKELY(x) (__builtin_expect(static_cast<bool>(x), 0) != 0)
 #  else
 #    define ATTR_UNLIKELY(x) (static_cast<bool>(x))
 #  endif

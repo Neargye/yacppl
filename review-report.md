@@ -187,6 +187,72 @@ H14, H22, H23 and re-checks R1/R2/R4/R5.
   (`[[assume]]` branch, H4/H5); one Clang >= 22 job (H14); a g++ ASan+UBSan job over ctest; a 32-bit job (MSVC Win32 or
   GCC -m32) and a libc++ job for the pre-C++17 `uncaught_exceptions()` path (R1).
 
+## Review CI
+
+Temporary workflow `.github/workflows/review.yml` (commits "review: ci probes 2026-10-09" and its rerun), 7 jobs, about
+2 minutes per run. Packages installed on runners: apt.llvm.org `llvm.sh 22`, `libc++-22-dev`, `libc++abi-22-dev`,
+`libclang-rt-22-dev` (clang-libcxx); Ubuntu `g++-multilib` (gcc-m32). Nothing else.
+
+- Run 1: https://github.com/Neargye/yacppl/actions/runs/37911139568 (head `defeaac`).
+- Run 2 (one rerun): https://github.com/Neargye/yacppl/actions/runs/37913025642 (head `15fc066`). It fixed the probe-side
+  C4127 warning in `R4.cpp` (MSVC c++20) and added a clang-libcxx step with `-Wno-c2y-extensions`, because H14 (below)
+  stopped R1/R1-cxxabi/R2 from building on Clang 22 in run 1.
+
+| job | toolchain | project build + ctest (Debug) | probes |
+|---|---|---|---|
+| macos-appleclang | AppleClang, macos-15 (arm64, libc++/libc++abi) | green | H5 held; H22, H23 not held; R1, R1-cxxabi, R2 held |
+| clang-libcxx | Clang 22 + libc++ 22, ASan+UBSan | green | H14, H22, H5 held; R1, R1-cxxabi, R2 held (run 2, with `-Wno-c2y-extensions`) |
+| gcc-latest | g++-14 | green | H4, H5 held; H22 not held; R1, R1-cxxabi held |
+| gcc-m32 | g++ 13 `-m32` | green | R1, R1-cxxabi held (`sizeof(void*)=4`); R5 held (`sizeof(size_t)=4`) |
+| msvc-x64 | MSVC x64 | green | H10 held; H11, H22, H23 not held; H5 c++23 not held; R2, R4 (run 2), R5 held |
+| msvc-x86 | MSVC Win32 | green | H10 held; H11, H23 not held; R2, R4 (run 2), R5 held (`sizeof(size_t)=4`) |
+| clangcl | ClangCL x64 | green | H23 not held; H5 c++23 not held; R2, R4, R5 held |
+
+The existing workflows (ubuntu GCC 12-14 / Clang 16-18, macos, windows MSVC x64; Release + Debug) were green on every
+pushed head (`cb220a8`, `defeaac`, `15fc066`), including the new targets `attributes-cpp98.t` and `byte-gnu.t`.
+
+### CI verdicts
+
+| H / R | verdict | evidence (job, key line) |
+|---|---|---|
+| H4 | CONFIRMED (GCC 14 too) | gcc-latest c++17/c++20: `static assertion failed: ATTR_ASSUME is a no-op although the compiler supports assume`; c++23 takes the `[[assume]]` branch (build-ok) |
+| H5 | CONFIRMED | gcc-latest c++23: `attributes.hpp:121:32: error: expected identifier before '[' token`; clang-libcxx and macos-appleclang c++23: `expected variable name or 'this' in lambda capture list`. MSVC and ClangCL do not take the `[[assume]]` branch (build-ok) |
+| H10 | CONFIRMED | msvc-x64/x86: `/std:c++14` discard not diagnosed (build-ok), `/std:c++17` `warning C4834: discarding return value of function with [[nodiscard]] attribute` |
+| H11 | REJECTED | msvc-x64/x86 `/std:c++14 /W4 /WX`: build-ok, no C4100/C4101/C4189 |
+| H14 | CONFIRMED | clang-libcxx (Clang 22) c++11/c++17: `error: '__COUNTER__' is a C2y extension [-Werror,-Wc2y-extensions]` in user code using `SAVER_*`; the same error broke R1/R1-cxxabi/R2 in run 1 |
+| H22 | CONFIRMED (libc++ 22 only) | clang-libcxx c++2c: `concepts.hpp:121:37: error: 'is_trivial<int>' is deprecated`; not reproduced with libstdc++ 14, AppleClang's libc++ or MS STL |
+| H23 | REJECTED | msvc-x64/x86, clangcl, macos-appleclang c++14/17/20: build-ok (feature-test macros defined) |
+| R1 (D1 control) | holds | run-ok at c++11/c++14 (and c++17 control) on libc++abi arm64 (macOS), libc++abi x86_64 (Clang 22, ASan+UBSan), libsupc++ x86_64 (GCC 14) and libsupc++ i386 (`-m32`); R1-cxxabi (`<cxxabi.h>` first) builds and runs on all four |
+| R2 | holds | run-ok on msvc-x64/x86, clangcl (pre-C++17 MSVC branch), macOS and Linux libc++ (default deployment target) |
+| R4 | holds | run-ok on msvc-x64/x86 and clangcl; `[[msvc::no_unique_address]]` gives `sizeof(holder)=4` at c++20, 8 before (same layout split as H7) |
+| R5 | holds | run-ok with the real `<windows.h>` on msvc-x64/x86 and clangcl, and with 32-bit `size_t` (msvc-x86, gcc-m32) |
+
+Final count over all 23 hypotheses: CONFIRMED 20 (16 in the container + H5, H10, H14, H22 in CI), REJECTED 2 (H11, H23),
+FORMAL 1 (H15), UNCLEAR 0.
+
+New questions to the owner:
+
+- Q10 (now confirmed): Clang 22 rejects `__COUNTER__` under `-pedantic-errors`, so users who build with that flag cannot use
+  `SAVER_*` / `WITH_SAVER_*`. Options: wrap the counter in a `_Pragma("clang diagnostic ...")` push/ignore/pop inside the
+  macros (needs a check that the pragma covers macro-expansion diagnostics), fall back to `__LINE__` under strict modes
+  (loses several guards per line, O6), or document `-Wno-c2y-extensions` as the project already does for its own targets.
+- Q11. H22: `nstd::Trivial` uses `std::is_trivial`, deprecated in C++26 and an error with libc++ 22 under `-Werror`.
+  Replacing it with `is_trivially_copyable && is_trivially_default_constructible` (libc++'s suggestion) differs for arrays
+  of unknown bound; keep `is_trivial` behind a C++26 check, or accept the difference?
+
+### Not verified
+
+- Old macOS deployment targets for R2 (needs `-mmacosx-version-min`, not expressible per probe).
+- GCC >= 15 / libstdc++ 15 (H22 with libstdc++): not on the ubuntu-24.04 image from official repositories.
+- Compilers older than the existing CI matrix (GCC < 12, Clang < 16), although the README advertises C++98/C++11 (R7).
+- MinGW and ARM/big-endian targets for R1.
+
+### Permanent CI suggestions
+
+The review jobs found real issues that the existing CI cannot see: Clang 22 (H14), libc++ 22 at c++2c (H22),
+32-bit (R1/R5) and ClangCL. A minimal permanent extension: one Clang >= 22 + libc++ job with ASan+UBSan, one 32-bit job
+(MSVC Win32 or GCC `-m32`), one ClangCL job, and GCC/Clang c++23 test targets (H4/H5).
+
 ## Decisions
 
 Source: control run — decisions of previous reviews were deliberately NOT imported (user instruction); previous review
@@ -212,6 +278,8 @@ first review run of yacppl).
 | D15 | H22 (`nstd::Trivial` uses `std::is_trivial`, deprecated in C++26) is not changed. | UNCLEAR: needs a C++26 standard library that deprecates `is_trivial`; closed by CI review probe. | verdict H22; `.review/probes/H22.cpp` |
 | D16 | H23 (`_v` traits / constexpr `nstd::unused` gated on feature-test macros) is not changed. | UNCLEAR: refuted for g++ 13 / clang++ 18; MSVC/AppleClang via CI review probe. | verdict H23; `.review/probes/H23.cpp` |
 | D17 | O5 (`nstd::byte` shift by a count wider than `unsigned int` is truncated under `NDEBUG`) is kept. | Documented precondition (README: count smaller than the bit width of `unsigned int`); Debug builds assert, also for `__int128` counts after commit 1190716. | evidence.md O5; `include/byte.hpp:113-123` (HEAD) |
+| D18 | CI review outcome: H5, H10, H14, H22 CONFIRMED; H11, H23 REJECTED; R1, R2, R4, R5 hold. D1 stays as is. | Runtime probe R1 passed on libc++abi (arm64 macOS, x86_64 Clang 22 with ASan+UBSan), libsupc++ x86_64 and i386 at c++11/c++14; the control run reproduces the first review's conclusion independently. | Review CI runs 37911139568, 37913025642 |
+| D19 | H14 and H22 are not fixed in this review; they wait for the owner (Q10, Q11). | Both fixes change behaviour or rely on unverified diagnostics handling (`_Pragma` inside macros, `__LINE__` fallback, `is_trivial` replacement differs for arrays of unknown bound); impact is limited to Clang 22 `-pedantic-errors` users and C++26 + libc++ 22 `-Werror` users. | Review CI section; `include/state_saver.hpp:307-313`; `include/concepts.hpp:120-121` |
 
 ## Hypothesis verdicts
 

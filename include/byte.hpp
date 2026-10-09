@@ -53,7 +53,7 @@ constexpr bool is_valid_byte_shift(I shift) noexcept {
       return false;
     }
   }
-  return static_cast<unsigned long long>(shift) < static_cast<unsigned long long>(std::numeric_limits<unsigned int>::digits);
+  return shift < static_cast<I>(std::numeric_limits<unsigned int>::digits);
 }
 
 template <typename T>

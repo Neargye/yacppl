@@ -131,6 +131,9 @@ if(HAS_CPP17_FLAG)
     make_mode_test(${PROJECT_NAME}-attributes-cpp17.t attributes_test.cpp c++17)
     make_mode_test(${PROJECT_NAME}-byte.t byte_test.cpp c++17)
     make_mode_test(${PROJECT_NAME}-utility.t utility_test.cpp c++17)
+    if(NOT MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        make_mode_test(${PROJECT_NAME}-byte-gnu.t byte_test.cpp gnu++17) # Extended integer types are integral only in GNU dialects.
+    endif()
 
     if(WIN32)
         make_mode_test(${PROJECT_NAME}-windows-headers.t windows_headers_test.cpp c++17)

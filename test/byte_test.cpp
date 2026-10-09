@@ -190,6 +190,18 @@ static_assert(!nstd::detail::is_valid_byte_shift(std::numeric_limits<unsigned in
 static_assert(nstd::detail::is_valid_byte_shift(static_cast<unsigned int>(std::numeric_limits<unsigned int>::digits - 1)), "the highest valid unsigned shift must be accepted.");
 static_assert(!nstd::detail::is_valid_byte_shift(static_cast<unsigned int>(std::numeric_limits<unsigned int>::digits)), "an unsigned shift by the bit width must be rejected.");
 static_assert(!nstd::detail::is_valid_byte_shift((std::numeric_limits<unsigned long long>::max)()), "wide shift counts must not be truncated before validation.");
+#if defined(__SIZEOF_INT128__)
+// __int128 is integral only in GNU dialects (gnu++17 test target).
+__extension__ typedef __int128 int128_shift;
+__extension__ typedef unsigned __int128 uint128_shift;
+constexpr bool int128_shifts_are_validated = !std::is_integral_v<int128_shift> ||
+                                             (nstd::detail::is_valid_byte_shift(static_cast<int128_shift>(1)) &&
+                                              !nstd::detail::is_valid_byte_shift(static_cast<int128_shift>(-1)) &&
+                                              !nstd::detail::is_valid_byte_shift((static_cast<int128_shift>(1) << 64) + 1) &&
+                                              !nstd::detail::is_valid_byte_shift((static_cast<uint128_shift>(1) << 64) + 1) &&
+                                              nstd::detail::is_valid_byte_shift(static_cast<uint128_shift>(std::numeric_limits<unsigned int>::digits - 1)));
+static_assert(int128_shifts_are_validated, "wide extended-integer shift counts must not be truncated before validation.");
+#endif
 static_assert(nstd::to_integer(nstd::to_byte(0x7f)) == 0x7f, "integer conversion must round-trip byte values.");
 static_assert(nstd::to_integer(nstd::to_byte(0x0f) | nstd::to_byte(0xf0)) == 0xff, "byte bitwise or must work.");
 static_assert(nstd::to_integer(nstd::to_byte(0xf0) & nstd::to_byte(0x0f)) == 0x00, "byte bitwise and must work.");

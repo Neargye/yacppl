@@ -132,6 +132,9 @@
 #if !defined(ATTR_NODISCARD)
 #  if NEARGYE_ATTR_CPLUSPLUS >= 201703L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(nodiscard)
 #    define ATTR_NODISCARD [[nodiscard]]
+// GCC cannot silence __warn_unused_result__ with a cast to void and rejects it on class types.
+#  elif !defined(__clang__) && defined(__GNUC__) && NEARGYE_ATTR_CPLUSPLUS >= 201103L && NEARGYE_ATTR_HAS_CPP_ATTRIBUTE(nodiscard)
+#    define ATTR_NODISCARD [[nodiscard]]
 #  elif defined(__clang__) || defined(__GNUC__)
 #    define ATTR_NODISCARD __attribute__((__warn_unused_result__))
 #  elif defined(_MSC_VER) && defined(_Check_return_)

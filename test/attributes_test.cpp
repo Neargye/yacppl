@@ -38,6 +38,14 @@ ATTR_NODISCARD_MSG("use the computed value") int nodiscard_msg_value() {
   return 43;
 }
 
+struct ATTR_NODISCARD nodiscard_type {
+  int value;
+};
+
+nodiscard_type make_nodiscard_type() {
+  return nodiscard_type{44};
+}
+
 struct ATTR_TRIVIAL_ABI trivial_abi_type {
   int value = 0;
 };
@@ -111,4 +119,12 @@ TEST_CASE("attributes macros compile and preserve runtime behavior") {
   CHECK(ATTR_LIKELY(h.value == 42));
   CHECK_FALSE(ATTR_UNLIKELY(h.value != 42));
   CHECK_THROWS_AS(throw_now(), const std::runtime_error&);
+}
+
+TEST_CASE("nodiscard results can be discarded explicitly") {
+  static_cast<void>(nodiscard_value());
+  static_cast<void>(nodiscard_msg_value());
+  static_cast<void>(make_nodiscard_type());
+
+  CHECK(make_nodiscard_type().value == 44);
 }

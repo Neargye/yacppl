@@ -237,6 +237,10 @@ class state_saver {
   }
 };
 
+// Guard macros use decltype(x); a variable of rvalue reference type names an lvalue.
+template <typename U>
+using state_saver_lvalue_t = typename std::conditional<std::is_rvalue_reference<U>::value, typename std::remove_reference<U>::type&, U>::type;
+
 #undef NEARGYE_STATE_SAVER_NOEXCEPT
 #undef NEARGYE_STATE_SAVER_TRY
 #undef NEARGYE_STATE_SAVER_CATCH
@@ -316,18 +320,18 @@ saver_success(U&) -> saver_success<U>;
 #define NEARGYE_STATE_SAVER_WITH(s, x)        NEARGYE_STATE_SAVER_WITH_(s, x, NEARGYE_STATE_SAVER_STR_CONCAT(NEARGYE_STATE_SAVER_INTERNAL_OBJECT_, NEARGYE_STATE_SAVER_COUNTER), NEARGYE_STATE_SAVER_STR_CONCAT(NEARGYE_STATE_SAVER_INTERNAL_FLAG_, NEARGYE_STATE_SAVER_COUNTER))
 
 // SAVER_EXIT saves the original variable value and restores on scope exit.
-#define MAKE_SAVER_EXIT(name, x) ::nstd::saver_exit<decltype(x)> name{x}
+#define MAKE_SAVER_EXIT(name, x) ::nstd::saver_exit<::nstd::detail::state_saver_lvalue_t<decltype(x)>> name{x}
 #define SAVER_EXIT(x)            NEARGYE_STATE_SAVER_MAYBE_UNUSED const MAKE_SAVER_EXIT(NEARGYE_STATE_SAVER_STR_CONCAT(SAVER_EXIT_, NEARGYE_STATE_SAVER_COUNTER), x)
-#define WITH_SAVER_EXIT(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_exit<decltype(x)>, x)
+#define WITH_SAVER_EXIT(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_exit<::nstd::detail::state_saver_lvalue_t<decltype(x)>>, x)
 
 // SAVER_FAIL saves the original variable value and restores on scope exit when a new exception is being unwound.
-#define MAKE_SAVER_FAIL(name, x) ::nstd::saver_fail<decltype(x)> name{x}
+#define MAKE_SAVER_FAIL(name, x) ::nstd::saver_fail<::nstd::detail::state_saver_lvalue_t<decltype(x)>> name{x}
 #define SAVER_FAIL(x)            NEARGYE_STATE_SAVER_MAYBE_UNUSED const MAKE_SAVER_FAIL(NEARGYE_STATE_SAVER_STR_CONCAT(SAVER_FAIL_, NEARGYE_STATE_SAVER_COUNTER), x)
-#define WITH_SAVER_FAIL(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_fail<decltype(x)>, x)
+#define WITH_SAVER_FAIL(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_fail<::nstd::detail::state_saver_lvalue_t<decltype(x)>>, x)
 
 // SAVER_SUCCESS saves the original variable value and restores on scope exit when no new exception is being unwound.
-#define MAKE_SAVER_SUCCESS(name, x) ::nstd::saver_success<decltype(x)> name{x}
+#define MAKE_SAVER_SUCCESS(name, x) ::nstd::saver_success<::nstd::detail::state_saver_lvalue_t<decltype(x)>> name{x}
 #define SAVER_SUCCESS(x)            NEARGYE_STATE_SAVER_MAYBE_UNUSED const MAKE_SAVER_SUCCESS(NEARGYE_STATE_SAVER_STR_CONCAT(SAVER_SUCCESS_, NEARGYE_STATE_SAVER_COUNTER), x)
-#define WITH_SAVER_SUCCESS(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_success<decltype(x)>, x)
+#define WITH_SAVER_SUCCESS(x)       NEARGYE_STATE_SAVER_WITH(::nstd::saver_success<::nstd::detail::state_saver_lvalue_t<decltype(x)>>, x)
 
 #endif // NEARGYE_NSTD_STATE_SAVER_HPP

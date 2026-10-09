@@ -341,6 +341,51 @@ TEST_CASE("state_saver block macros select the requested exit policy") {
   CHECK(value == changed_value);
 }
 
+namespace {
+
+void exit_guard_on_rvalue_reference(int&& value) {
+  SAVER_EXIT(value);
+  value = changed_value;
+}
+
+void fail_guard_on_rvalue_reference(int&& value) {
+  MAKE_SAVER_FAIL(guard, value);
+  value = changed_value;
+  throw std::runtime_error{"error"};
+}
+
+template <typename T>
+void success_guard_on_forwarding_reference(T&& value) {
+  WITH_SAVER_SUCCESS(value) {
+    value = changed_value;
+  }
+}
+
+} // namespace
+
+TEST_CASE("state_saver macros accept variables of rvalue reference type") {
+  int value = original_value;
+
+  exit_guard_on_rvalue_reference(std::move(value));
+  CHECK(value == original_value);
+
+  CHECK_THROWS(fail_guard_on_rvalue_reference(std::move(value)));
+  CHECK(value == original_value);
+
+  success_guard_on_forwarding_reference(std::move(value));
+  CHECK(value == original_value);
+
+  success_guard_on_forwarding_reference(value);
+  CHECK(value == original_value);
+
+  int&& reference = std::move(value);
+  {
+    SAVER_EXIT(reference);
+    reference = changed_value;
+  }
+  CHECK(value == original_value);
+}
+
 TEST_CASE("dismiss disables automatic restore") {
   int value = original_value;
 

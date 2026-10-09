@@ -74,6 +74,11 @@ int halve_positive(int x) {
 
 } // namespace
 
+// A call keeps MSVC C4127 (conditional expression is constant) out of the size check.
+unsigned int holder_size() {
+  return static_cast<unsigned int>(sizeof(holder));
+}
+
 int main(int argc, char**) {
   int failures = 0;
   ATTR_MAYBE_UNUSED int unused_local = 1;
@@ -97,7 +102,7 @@ int main(int argc, char**) {
     ++failures;
   }
 #if (defined(_MSVC_LANG) && _MSVC_LANG >= 202002L) || __cplusplus >= 202002L
-  if (sizeof(holder) != sizeof(int)) {
+  if (holder_size() != sizeof(int)) {
     std::printf("no_unique_address has no effect in C++20: sizeof(holder)=%u\n", static_cast<unsigned int>(sizeof(holder)));
     ++failures;
   }

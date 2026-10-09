@@ -60,6 +60,11 @@ jobs:
       if: always()
       run: python3 review/probes/run.py --job ${{ matrix.id }} --style gcc --cxx ${{ matrix.cxx }} "--flags=${{ matrix.flags }}"
 
+    # Clang >= 22 rejects __COUNTER__ under -pedantic-errors (H14), which hides the R1/R2 runtime checks on libc++abi.
+    - name: Probes without -Wc2y-extensions
+      if: always() && matrix.id == 'clang-libcxx'
+      run: python3 review/probes/run.py --job ${{ matrix.id }} --style gcc --cxx ${{ matrix.cxx }} "--flags=${{ matrix.flags }} -Wno-c2y-extensions"
+
   windows:
     strategy:
       fail-fast: false
